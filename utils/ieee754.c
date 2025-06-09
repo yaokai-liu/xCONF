@@ -73,11 +73,11 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) integer, UINT(_ew) exponent)
   exponent = (exponent + order_offs) & order_MASK;                                    \
   uint32_t adjust = tail_bits - effect_bits + (exponent != 0);                        \
   integer = (effect_bits <= tail_bits) ? (integer << adjust) : (integer >> -adjust);  \
-  const uint64_t val = (((UINT(_w)) sign) << (result_bits - 1))                       \
-                     | (((UINT(_w)) exponent) << tail_bits)                           \
-                     | (integer & tail_MASK);                                         \
-  const FLOAT(_w) *res = (FLOAT(_w) *)&val;                                           \
-  return *res;                                                                        \
+  union { UINT(_w) I; FLOAT(_w) F; } val = {};                                        \
+  val.I = (((UINT(_w)) sign) << (result_bits - 1))                                    \
+        | (((UINT(_w)) exponent) << tail_bits)                                        \
+        | (integer & tail_MASK);                                                      \
+  return val.F;                                                                       \
 }
 
 u_to_ieee754bin(32, 8, 8)
