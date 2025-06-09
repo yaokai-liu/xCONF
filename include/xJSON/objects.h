@@ -33,25 +33,9 @@
 #include "enum.h"
 #include "extint.h"
 
+typedef struct XJSONText XJSONText;
 typedef struct XJSONList XJSONList;
+typedef struct XJSONValue XJSONValue;
 typedef struct XJSONObject XJSONObject;
-
-typedef struct XJSONValue {
-  xJSON_val_t   type;
-  uint32_t      size;
-  union {
-    XJSONList *   LIST;
-    char_t *      TEXT;
-    uint32_t      UINT;
-    float         FLOAT;
-    double        DOUBLE;
-    XJSONObject * OBJECT;
-    bool          BOOLEAN;
-    uint64_t      LONG_UINT;
-    long double   LONG_DOUBLE;
-    uint128_t     LONG_LONG_UINT;
-  } val;
-} XJSONValue;
-
 
 #endif //XJSON_OBJECTS_H

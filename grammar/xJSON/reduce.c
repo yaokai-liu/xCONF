@@ -33,8 +33,8 @@ List * XJSON_List_0 (Token args[], XJSONContext *, ErrInfo *, const Allocator *)
   return args[0].value;
 }
 
-List * XJSON_List_1 (Token [], XJSONContext *, ErrInfo *, const Allocator * ) {
-  return nullptr;
+List * XJSON_List_1 (Token args[], XJSONContext *, ErrInfo *, const Allocator * ) {
+  return args[0].value;
 }
 
 Object * XJSON_Object_0 (Token args[], XJSONContext *, ErrInfo *, const Allocator *) {
@@ -96,36 +96,82 @@ PathKey * XJSON_PathKey_2 (Token [], XJSONContext *, ErrInfo *, const Allocator 
   return nullptr;
 }
 
-Texts * XJSON_Texts_0 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
-  return nullptr;
+Texts * XJSON_Texts_0 (Token args[], XJSONContext *context, ErrInfo *, const Allocator *) {
+  Texts *texts = args[0].value;
+  Text *text = args[1].value;
+
+  XJSONContent_add_text_content(context, text->content, text->length);
+  texts->size += text->length;
+
+  return texts;
 }
 
-Texts * XJSON_Texts_1 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
-  return nullptr;
+Texts * XJSON_Texts_1 (Token args[], XJSONContext *context, ErrInfo *, const Allocator *allocator) {
+  Text *text = args[0].value;
+
+  Texts *texts = allocator->calloc(1, sizeof(Texts));
+
+  texts->content = XJSONContent_new_text_content(context, text->content, text->length);
+  texts->size = text->length;
+
+  return texts;
 }
 
-Value * XJSON_Value_0 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
-  return nullptr;
+Value * XJSON_Value_0 (Token args[], XJSONContext *, ErrInfo *, const Allocator *allocator) {
+  Object *object = args->value;
+
+  Value *value = allocator->calloc(1, sizeof(Value));
+  value->type = XJSON_VAL_LIST;
+  value->size = object->count;
+  value->val.OBJECT = object;
+
+  return value;
 }
 
-Value * XJSON_Value_1 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
-  return nullptr;
+Value * XJSON_Value_1 (Token args[], XJSONContext *, ErrInfo *, const Allocator *allocator) {
+  List *list = args->value;
+
+  Value *value = allocator->calloc(1, sizeof(Value));
+  value->type = XJSON_VAL_LIST;
+  value->size = list->count;
+  value->val.LIST = list;
+
+  return value;
 }
 
-Value * XJSON_Value_2 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
-  return nullptr;
+Value * XJSON_Value_2 (Token args[], XJSONContext *, ErrInfo *, const Allocator *) {
+  return args[0].value;
 }
 
-Value * XJSON_Value_3 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
-  return nullptr;
+Value * XJSON_Value_3 (Token args[], XJSONContext *, ErrInfo *, const Allocator *allocator) {
+  Texts *text = args->value;
+
+  Value *value = allocator->calloc(1, sizeof(Value));
+  value->type = XJSON_VAL_TEXT;
+  value->size = text->size;
+  value->val.TEXT = text;
+
+  return value;
 }
 
-Value * XJSON_Value_4 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
-  return nullptr;
+Value * XJSON_Value_4 (Token args[], XJSONContext *, ErrInfo *, const Allocator *allocator) {
+  bool boolean = (uint64_t) args->value;
+
+  Value *value = allocator->calloc(1, sizeof(Value));
+  value->type = XJSON_VAL_BOOLEAN;
+  value->size = 1;
+  value->val.BOOLEAN = boolean;
+
+  return value;
 }
 
-Value * XJSON_Value_5 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
-  return nullptr;
+Value * XJSON_Value_5 (Token [], XJSONContext *, ErrInfo *, const Allocator *allocator) {
+
+  Value *value = allocator->calloc(1, sizeof(Value));
+  value->type = XJSON_VAL_NULL;
+  value->size = 0;
+
+  return value;
 }
 
 Values * XJSON_Values_0 (Token args[], XJSONContext *, ErrInfo *, const Allocator *allocator) {

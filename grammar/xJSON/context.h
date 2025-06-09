@@ -35,8 +35,15 @@
 typedef struct XJSONContext {
   Array *  ident_array;  // Array<char_t>
   Trie *   ident_trie;   // Trie<char_t, REFER(char_t)>
+  Array *  text_array;  // Array<char_t>
 } XJSONContext;
 
 void XJSONContext_state_action(XJSONContext *context, uint32_t state, Token *, const Allocator *allocator);
+
+REFER(char_t) XJSONContent_new_text_content(XJSONContext *context, const char_t *text_content, uint32_t size);
+
+#define XJSONContent_add_text_content(context, text_content, size) \
+                         Array_append((context)->text_array, (text_content), (size))
+
 
 #endif //XJSON_GRAMMAR_XJSON_CONTEXT_H

@@ -32,6 +32,6 @@
 typedef float         float32_t;
 typedef double        float64_t;
 typedef long double   float128_t;
-typedef float128_t    float256_t[2];
+typedef float128_t    float256_t;
 
 #endif //XJSON_EXT_FLOAT_H

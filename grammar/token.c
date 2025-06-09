@@ -54,14 +54,18 @@ void releaseToken(Token *token, const Allocator *allocator) {
     // token array
     releaseArrayCase(Values, Value)
     releaseArrayCase(Pairs, Pair)
-    releaseArrayCase(Texts, Text)
     // token
+    releaseTokenCase(Texts, Texts)
     releaseTokenCase(Value, Value)
     releaseTokenCase(Pair, Pair)
     releaseTokenCase(PathKey, PathKey)
     releaseTokenCase(Object, Object)
     releaseTokenCase(List, List)
+    releaseTokenCase(NUMBER, Value)
     releaseTokenCase(TEXT, Text)
+    case XJSON_TOKEN_KEY: {
+      if (token->value) { allocator->free(token->value); }
+    }
     default: {}
   }
 }

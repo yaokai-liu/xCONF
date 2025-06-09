@@ -355,11 +355,11 @@ uint32_t t_KEY(const char_t * const input, Terminal * const result, const Alloca
   // endswith '-' is forbidden
   if (*(pText - 1) == '-') { result->length = pText - input; return 0; }
 
-  const uint32_t len = pText - input;
+  const uint32_t length = pText - input;
   result->type = XJSON_TOKEN_KEY;
-  result->value = allocator->calloc(len + 1, sizeof(char_t));
-  allocator->memcpy(result->value, input, len);
-  ((char_t *) result->value)[len] = '\0';
+  result->value = allocator->malloc((length + 1) * sizeof(char_t));
+  allocator->memcpy(result->value, input, length);
+  ((char_t *) result->value)[length] = '\0';
   result->length = pText - input;
   return result->length;
 }
@@ -421,7 +421,8 @@ uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,
   Text *text = allocator->calloc(1, sizeof(Text));
   text->n_pred = n_pred;
   text->n_succ = n_succ;
-  text->content = allocator->calloc(length + 1, sizeof(char_t));
+  text->length = pText - input;
+  text->content = allocator->malloc((length + 1) * sizeof(char_t));
   allocator->memcpy(text->content, input - n_pred, length);
   text->content[length] = '\0';
   result->length = length;

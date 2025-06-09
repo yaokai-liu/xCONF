@@ -33,6 +33,39 @@
 #include "xJSON/token.h"
 #include "xJSON/enum.h"
 
+typedef struct XJSONText {
+  uint32_t      size;
+  REFER(char_t) content;
+} XJSONText;
+
+typedef struct XJSONList {
+  uint32_t           count;
+  REFER(XJSONValue)  values;
+} XJSONList;
+
+typedef struct XJSONObject {
+  uint32_t              count;
+  REFER(REFER(char_t))  keys;
+  REFER(XJSONValue)     values;
+} XJSONObject;
+
+typedef struct XJSONValue {
+  xJSON_val_t   type;
+  uint32_t      size;
+  union {
+    XJSONList *   LIST;
+    XJSONText *   TEXT;
+    uint32_t      UINT;
+    float         FLOAT;
+    double        DOUBLE;
+    XJSONObject * OBJECT;
+    bool          BOOLEAN;
+    uint64_t      LONG_UINT;
+    long double   LONG_DOUBLE;
+    uint128_t     LONG_LONG_UINT;
+  } val;
+} XJSONValue;
+
 typedef XJSONList List;
 typedef XJSONValue Value;
 typedef XJSONObject Object;
@@ -46,12 +79,13 @@ typedef struct Pair {
 } Pair;
 
 typedef struct Text {
-  uint32_t n_pred;
-  uint32_t n_succ;
+  uint16_t n_pred;
+  uint16_t n_succ;
+  uint32_t length;
   char_t * content;
 } Text;
 
-typedef Array Texts; // Array<Pair>
+typedef XJSONText Texts;
 
 typedef struct PathKey {
 
@@ -60,6 +94,7 @@ typedef struct PathKey {
 void releaseValue(Value *, const Allocator *);
 void releasePair(Pair *, const Allocator *);
 void releaseText(Text *, const Allocator *);
+void releaseTexts(Texts *, const Allocator *);
 void releasePathKey(PathKey *, const Allocator *);
 void releaseObject(Object *, const Allocator *);
 void releaseList(List *, const Allocator *);

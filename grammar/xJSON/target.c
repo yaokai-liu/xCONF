@@ -40,7 +40,14 @@ void releasePair(Pair *pair, const Allocator *allocator) {
   releaseValue(pair->value, allocator);
 }
 
-void releaseText(Text *, const Allocator *) {
+void releaseText(Text *text, const Allocator *allocator) {
+  if (text->content) { allocator->free(text->content); }
+  text->content = nullptr;
+  text->n_pred = 0;
+  text->n_succ = 0;
+}
+
+void releaseTexts(Texts *, const Allocator *) {
   /* nothing to do */
 }
 
@@ -48,10 +55,11 @@ void releasePathKey(PathKey *, const Allocator *) {
   /* nothing to do */
 }
 
-void releaseObject(Object *, const Allocator *) {
-  // TODO: relay on the implementation of XJSONObject
+void releaseObject(Object *object, const Allocator *allocator) {
+  allocator->free(object->keys);
+  allocator->free(object->values);
 }
 
-void releaseList(List *, const Allocator *) {
-  // TODO: relay on the implementation of XJSONList
+void releaseList(List *list, const Allocator *allocator) {
+  allocator->free(list->values);
 }

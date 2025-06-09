@@ -26,3 +26,14 @@
  **/
 
 #include "context.h"
+
+void XJSONContext_state_action(XJSONContext *, uint32_t , Token *, const Allocator *) {
+
+}
+
+inline REFER(char_t) XJSONContent_new_text_content(XJSONContext *context, const char_t *text_content, uint32_t size) {
+  Array_append(context->text_array, "\0", 1);
+  REFER(char_t) v_content = Array_last_virt(context->text_array) + 1;
+  Array_append(context->text_array, text_content, size);
+  return v_content;
+}
