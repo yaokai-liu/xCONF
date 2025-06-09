@@ -41,3 +41,14 @@ if (NOT TARGET meman)
     add_library(meman STATIC ${MEMAN_SRC})
     link_libraries(meman)
 endif ()
+
+include_directories(include)
+
+aux_source_directory(utils XJSON_UTILS_SRC)
+
+file(GLOB_RECURSE XJSON_GRAMMAR_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} grammar/*.c grammar/*.h)
+add_library(${TARGET_PREFIX}grammar STATIC ${XJSON_GRAMMAR_SRC} ${XJSON_UTILS_SRC})
+target_include_directories(${TARGET_PREFIX}grammar PRIVATE grammar utils)
+
+add_executable(debug test/debug.c ${XJSON_UTILS_SRC})
+target_include_directories(debug PRIVATE utils)
