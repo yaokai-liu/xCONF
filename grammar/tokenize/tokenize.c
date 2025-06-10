@@ -347,8 +347,12 @@ uint32_t t_KEY(const char_t * const input, Terminal * const result, const Alloca
   while (true) {
     if (isDecDigital(pText) || startswithLetter(pText)) { pText++; continue; }
     // "_-" and "-_" are forbidden
-    if (*pText == '_') { if (*(pText + 1) == '-') { result->length = pText - input; return 0; } }
-    if (*pText == '-') { if (*(pText + 1) == '_') { result->length = pText - input; return 0; } }
+    if (*pText == '_') {
+      if (pText[1] == '-') { result->length = pText - input; return 0; } else { pText++; }
+    }
+    if (*pText == '-') {
+      if (pText[1] == '_') { result->length = pText - input; return 0; } else { pText++; }
+    }
     break;
   }
 
