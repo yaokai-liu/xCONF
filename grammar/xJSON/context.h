@@ -31,11 +31,17 @@
 #include "xJSON/error.h"
 #include "array.h"
 #include "trie.h"
+#include "target.h"
+#include "stack.h"
 
 typedef struct XJSONContext {
-  Array *  ident_array;  // Array<char_t>
-  Trie *   ident_trie;   // Trie<char_t, REFER(char_t)>
-  Array *  text_array;  // Array<char_t>
+  const Allocator *allocator;
+  Array   *key_array;     // Array<char_t>
+  Trie    *key_trie;      // Trie<char_t, REFER(char_t)>
+  Array   *text_array;    // Array<char_t>
+  Array   *value_array;   // Array<Value>
+  Stack   *obj_stack;     // Stack<Object>
+  Object  *object;
 } XJSONContext;
 
 void XJSONContext_state_action(XJSONContext *context, uint32_t state, Token *, const Allocator *allocator);

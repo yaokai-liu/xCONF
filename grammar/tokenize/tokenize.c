@@ -418,13 +418,13 @@ uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,
 
   const uint32_t length = n_pred + pText - input + n_succ;
   result->type = XJSON_TOKEN_TEXT;
-  Text *text = allocator->calloc(1, sizeof(Text));
+  WrapperedText *text = allocator->calloc(1, sizeof(WrapperedText));
   text->n_pred = n_pred;
   text->n_succ = n_succ;
   text->length = pText - input;
-  text->content = allocator->malloc((length + 1) * sizeof(char_t));
-  allocator->memcpy(text->content, input - n_pred, length);
-  text->content[length] = '\0';
+  text->content = allocator->malloc((text->length + 1) * sizeof(char_t));
+  allocator->memcpy(text->content, input, text->length);
+  text->content[text->length] = '\0';
   result->length = length;
   return length;
 }

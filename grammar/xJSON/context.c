@@ -26,9 +26,25 @@
  **/
 
 #include "context.h"
+#include "generated/xJSON/action-table.gen.h"
 
-void XJSONContext_state_action(XJSONContext *, uint32_t , Token *, const Allocator *) {
-
+void XJSONContext_state_action(XJSONContext *context, uint32_t state, Token *, const Allocator *) {
+  switch (state) {
+    case XJSON_state_LEFT_BRACKET:
+    case XJSON_state_LEFT_BRACKET_TEXT_ASSIGN_LEFT_BRACKET:
+    case XJSON_state_LEFT_BRACKET_TEXT_ASSIGN_LEFT_SQUARE_BRACKET_LEFT_BRACKET: {
+      Stack_push(context->obj_stack, &context->object, sizeof(Object *));
+      context->object = context->allocator->calloc(1, sizeof(Object));
+      break;
+    }
+    case XJSON_state_Object:
+    case XJSON_state_LEFT_BRACKET_TEXT_ASSIGN_Object:
+    case XJSON_state_LEFT_BRACKET_TEXT_ASSIGN_LEFT_SQUARE_BRACKET_Object: {
+      Stack_pop(context->obj_stack, &context->object, sizeof(Object *));
+      break;
+    }
+    default:{}
+  }
 }
 
 inline REFER(char_t) XJSONContent_new_text_content(XJSONContext *context, const char_t *text_content, uint32_t size) {

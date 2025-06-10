@@ -29,48 +29,46 @@
 #define XJSON_GRAMMAR_TARGET_H
 
 #include "array.h"
-#include "xJSON/objects.h"
+#include "xJSON/extint.h"
 #include "xJSON/token.h"
 #include "xJSON/enum.h"
+#include "avl-tree.h"
+#include "dict.h"
 
-typedef struct XJSONText {
+
+typedef Array List; // Array<REFER(Value)>
+typedef struct Text Text;
+typedef struct Value Value;
+typedef struct Object Object;
+
+typedef struct Text {
   uint32_t      size;
   REFER(char_t) content;
-} XJSONText;
+} Text;
 
-typedef struct XJSONList {
-  uint32_t           count;
-  REFER(XJSONValue)  values;
-} XJSONList;
+typedef struct Object {
+  Array *   keys;     // Array<REFER(char_t)>
+  AVLTree * mapping;  // AVLTree<REFER(char_t), REFER(Value>>
+} Object;
 
-typedef struct XJSONObject {
-  uint32_t              count;
-  REFER(REFER(char_t))  keys;
-  REFER(XJSONValue)     values;
-} XJSONObject;
-
-typedef struct XJSONValue {
+typedef struct Value {
   xJSON_val_t   type;
   uint32_t      size;
   union {
-    XJSONList *   LIST;
-    XJSONText *   TEXT;
+    List *        LIST;
+    Text *        TEXT;
     uint32_t      UINT;
     float         FLOAT;
     double        DOUBLE;
-    XJSONObject * OBJECT;
+    Object *      OBJECT;
     bool          BOOLEAN;
     uint64_t      LONG_UINT;
     long double   LONG_DOUBLE;
     uint128_t     LONG_LONG_UINT;
   } val;
-} XJSONValue;
+} Value;
 
-typedef XJSONList List;
-typedef XJSONValue Value;
-typedef XJSONObject Object;
-
-typedef Array Values; // Array<Value>
+typedef Array Values; // Array<REFER(Value)>
 typedef Array Pairs; // Array<Pair>
 
 typedef struct Pair {
@@ -78,25 +76,28 @@ typedef struct Pair {
   Value *value;
 } Pair;
 
-typedef struct Text {
+typedef struct WrapperedText {
   uint16_t n_pred;
   uint16_t n_succ;
   uint32_t length;
   char_t * content;
-} Text;
+} WrapperedText;
 
-typedef XJSONText Texts;
+typedef Text Texts;
 
-typedef struct PathKey {
+// Maybe reinterpretation of `Path` here
+// makes a little bit confused, but there is no wrong.
+// Because every `Path` is only mapping to a `Value`.
+typedef Value Path;
 
-} PathKey;
+Object *Object_new();
 
 void releaseValue(Value *, const Allocator *);
 void releasePair(Pair *, const Allocator *);
-void releaseText(Text *, const Allocator *);
 void releaseTexts(Texts *, const Allocator *);
-void releasePathKey(PathKey *, const Allocator *);
+void releasePath(Path *, const Allocator *);
 void releaseObject(Object *, const Allocator *);
 void releaseList(List *, const Allocator *);
+void releaseWrapperedText(WrapperedText *, const Allocator *);
 
 #endif //XJSON_GRAMMAR_TARGET_H

@@ -36,11 +36,11 @@ void releaseValue(Value *val, const Allocator *allocator) {
   }
 }
 
-void releasePair(Pair *pair, const Allocator *allocator) {
-  releaseValue(pair->value, allocator);
+void releasePair(Pair *, const Allocator *) {
+  /* nothing to do */
 }
 
-void releaseText(Text *text, const Allocator *allocator) {
+void releaseWrapperedText(WrapperedText *text, const Allocator *allocator) {
   if (text->content) { allocator->free(text->content); }
   text->content = nullptr;
   text->n_pred = 0;
@@ -51,15 +51,15 @@ void releaseTexts(Texts *, const Allocator *) {
   /* nothing to do */
 }
 
-void releasePathKey(PathKey *, const Allocator *) {
+void releasePath(Path *, const Allocator *) {
   /* nothing to do */
 }
 
-void releaseObject(Object *object, const Allocator *allocator) {
-  allocator->free(object->keys);
-  allocator->free(object->values);
+void releaseObject(Object *object, const Allocator *) {
+  releasePrimeArray(object->keys);
+  AVLTree_destroy(object->mapping, nullptr);
 }
 
-void releaseList(List *list, const Allocator *allocator) {
-  allocator->free(list->values);
+void releaseList(List *list, const Allocator *) {
+  releasePrimeArray(list);
 }
