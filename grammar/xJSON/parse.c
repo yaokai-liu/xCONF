@@ -30,8 +30,14 @@
 #include "generated/xJSON/action-table.gen.h"
 #include "generated/xJSON/rules.gen.h"
 
-
 #define MAX_ARGC       16
+
+
+static Object *failed_to_get_next_state(Stack *state_stack, Stack *token_stack,
+                                 Token *token, const Allocator *allocator);
+static Object *failed_to_produce(Stack *state_stack, Stack *token_stack,
+                          Token *, uint32_t, const Allocator *allocator);
+static Object *clean_parse_stack(Stack *state_stack, Stack *token_stack, const Allocator *allocator);
 
 Object *parse(Tokenizer *tokenizer, XJSONContext *context, ErrInfo *errInfo, const Allocator *allocator) {
   Token token = {};

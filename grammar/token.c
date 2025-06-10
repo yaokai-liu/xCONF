@@ -32,7 +32,7 @@
 #include "generated/tokens.gen.h"
 #include "xJSON/token.h"
 
-const char_t *get_name(uint16_t type) {
+const char_t *get_token_type_name(uint16_t type) {
   return TOKEN_NAMES[type];
 }
 

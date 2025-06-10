@@ -35,12 +35,4 @@
 
 Object *parse(Tokenizer *tokenizer, XJSONContext *context, ErrInfo *errInfo, const Allocator *allocator);
 
-Object *failed_to_get_next_state(
-    Stack *state_stack, Stack *token_stack, Token *token, const Allocator *allocator
-);
-Object *failed_to_produce(Stack *state_stack, Stack *token_stack, Token *, uint32_t,
-                                const Allocator *allocator);
-Object  *clean_parse_stack(Stack *state_stack, Stack *token_stack, const Allocator *allocator);
-
-
 #endif //XJSON_GRAMMAR_XJSON_PARSE_H

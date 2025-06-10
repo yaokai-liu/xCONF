@@ -64,7 +64,7 @@ typedef struct Token {
   void *value;
 } Token;
 
-const char_t *get_name(uint16_t type);
+const char_t *get_token_type_name(uint16_t type);
 
 void releaseToken(Token *token, const Allocator *allocator);
 

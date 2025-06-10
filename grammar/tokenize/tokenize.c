@@ -38,20 +38,31 @@
 #define max(a, b)          ((a) > (b) ? (a) : (b))
 #define min(a, b)          ((a) < (b) ? (a) : (b))
 
-uint32_t t_KEY(const char_t *input, Terminal *result, const Allocator *allocator);
-uint32_t t_INT_DIGITALS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
-uint32_t t_INT_DIGITALS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
-uint32_t t_INT_DIGITALS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
-uint32_t t_INT_DIGITALS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
-uint32_t t_FRAC_DIGITALS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
-uint32_t t_FRAC_DIGITALS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
-uint32_t t_FRAC_DIGITALS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
-uint32_t t_FRAC_DIGITALS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_KEY(const char_t *input, Terminal *result, const Allocator *allocator);
+static uint32_t t_NUMBER(const char_t *input, Terminal *result, bool negative ,
+                         uint32_t adic, const Allocator *allocator);
+static uint32_t t_INT_DIGITALS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_INT_DIGITALS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_INT_DIGITALS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_INT_DIGITALS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_FRAC_DIGITALS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_FRAC_DIGITALS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_FRAC_DIGITALS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_FRAC_DIGITALS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t try_keyword_FALSE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+static uint32_t try_keyword_NULL(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+static uint32_t try_keyword_TRUE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+static uint32_t try_keyword_false(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+static uint32_t try_keyword_null(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+static uint32_t try_keyword_true(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+static uint32_t tokenize_single_symbol(const char_t *input, Terminal *result, const Allocator *allocator);
 
-uint32_t tokenize_number(const char_t *input, Terminal *result, const Allocator *allocator);
-uint32_t tokenize_text(const char_t *input, uint32_t n_pred,
-                       const char_t *succ, uint32_t n_succ,
-                       Terminal *result, const Allocator *allocator);
+static uint32_t tokenize_number(const char_t *input, Terminal *result, const Allocator *allocator);
+static uint32_t tokenize_text(const char_t *input, uint32_t n_pred,
+                              const char_t *succ, uint32_t n_succ,
+                              Terminal *result, const Allocator *allocator);
+
+static uint32_t try_pass_comment(const char *input, uint32_t *lineno, uint32_t *column);
 
 #define isSign(pText)             ((*pText == '-') || (*pText == '+'))
 #define isKeyHeader(pText)        (startswithLetter(pText) || (*pText == '_'))
@@ -250,13 +261,14 @@ inline uint32_t t_FRAC_DIGITALS_adic2(const char_t *const input, uint32_t *effec
 #define INT_DIGITAL_FUNC      0
 #define FRAC_DIGITAL_FUNC     1
 
-uint32_t (*const DIGITAL_FUNC_TOOLS[4][2])(const char_t *, uint32_t *, uint256_t *) = {
+typedef uint32_t tokenize_t(const char_t *, uint32_t *, uint256_t *);
+static tokenize_t *const DIGITAL_FUNC_TOOLS[4][2] = {
     [ADIC_TYPE_16] = { [INT_DIGITAL_FUNC] = t_INT_DIGITALS_adic16, [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITALS_adic16},
     [ADIC_TYPE_10] = { [INT_DIGITAL_FUNC] = t_INT_DIGITALS_adic10, [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITALS_adic10},
     [ADIC_TYPE_8 ] = { [INT_DIGITAL_FUNC] = t_INT_DIGITALS_adic8 , [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITALS_adic8 },
     [ADIC_TYPE_2 ] = { [INT_DIGITAL_FUNC] = t_INT_DIGITALS_adic2 , [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITALS_adic2 },
 };
-const uint32_t ADIC_BASE[] = {
+static const uint32_t ADIC_BASE[] = {
     [ADIC_TYPE_16] = 16,
     [ADIC_TYPE_10] = 10,
     [ADIC_TYPE_8 ] = 8,
@@ -310,7 +322,7 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
   value->type = type;
   value->size = size;
   if (type == XJSON_VAL_FLOAT) {
-    uint32_t exponent_base = (adic == ADIC_TYPE_10) ? 10 : 2;
+    const uint32_t exponent_base = ADIC_BASE[adic];
     if (size == 4 ) {
       float32_t real = ((float32_t) (uint32_t) integer);
       float32_t exp = (float32_t) pow((uint32_t) exponent_base, (int32_t) exponent);
