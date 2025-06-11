@@ -52,7 +52,7 @@ typedef struct Object {
 } Object;
 
 typedef struct Value {
-  xJSON_val_t   type;
+  XJSON_val_type   type;
   uint32_t      size;
   union {
     List *        LIST;

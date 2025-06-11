@@ -13,7 +13,7 @@ else ()
     set(TARGET_PREFIX "xJSON_")
 endif ()
 
-add_compile_options("-funsigned-char")
+add_compile_options("-funsigned-char" "-O3")
 add_compile_options("-Wall" "-Wextra" "-Werror")
 if (WIN32)
     add_compile_options("-Wno-format")

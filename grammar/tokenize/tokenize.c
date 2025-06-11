@@ -292,11 +292,11 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
   uint32_t int_eff_length = 0;
   uint32_t frac_eff_length = 0;
   bool exp_negative = false;
-  xJSON_val_t type = XJSON_VAL_SIGNED;
+  XJSON_val_type type = XJSON_VAL_INT;
 
   uint32_t length = DIGITAL_FUNC_TOOLS[adic][INT_DIGITAL_FUNC](pText, &int_eff_length, &integer);
   if (!length) { return 0; }
-  if ((*pText == 'u') || (*pText == 'U')) { type = XJSON_VAL_UNSIGNED; }
+  if ((*pText == 'u') || (*pText == 'U')) { type = XJSON_VAL_UINT; }
   else if (*pText == '.') {
     type = XJSON_VAL_FLOAT; size = 8; pText ++;
     length = DIGITAL_FUNC_TOOLS[adic][FRAC_DIGITAL_FUNC](pText, &frac_eff_length, &integer);

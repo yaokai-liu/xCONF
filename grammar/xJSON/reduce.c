@@ -37,12 +37,12 @@ List * XJSON_List_1 (Token args[], XJSONContext *, ErrInfo *, const Allocator * 
   return args[0].value;
 }
 
-Object * XJSON_Object_0 (Token args[], XJSONContext *, ErrInfo *, const Allocator *) {
-  return args[0].value;
+Object * XJSON_Object_0 (Token [], XJSONContext *context, ErrInfo *, const Allocator *) {
+  return context->object;
 }
 
-Object * XJSON_Object_1 (Token args[], XJSONContext *, ErrInfo *, const Allocator *) {
-  return args[0].value;
+Object * XJSON_Object_1 (Token [], XJSONContext *context, ErrInfo *, const Allocator *) {
+  return context->object;
 }
 
 Object * XJSON_Object_EXT (Token args[], XJSONContext *, ErrInfo *, const Allocator *) {
@@ -91,54 +91,12 @@ Pair * XJSON_Pair_2 (Token args[], XJSONContext *context, ErrInfo *, const Alloc
   return (Pair *) XJSON_TOKEN_Pair;
 }
 
-Pair * XJSON_Pair_3 (Token args[], XJSONContext *context, ErrInfo *, const Allocator *) {
-  WrapperedText *text = args[0].value;
-  Value *value = args[2].value;
-
-  REFER(char_t) v_key = Trie_get(context->key_trie, text->content);
-  if (!v_key) {
-    v_key = Array_last_virt(context->key_array) + 1;
-    Array_append(context->key_array, text->content, text->length + 1);
-    Trie_set(context->key_trie, text->content, v_key);
-  }
-
-
-  Object *object = context->object;
-  REFER(Value) v_val = AVLTree_get(object->mapping, (uint64_t) v_key);
-  if (v_val) {
-    Value val = {.type = XJSON_VAL_UNINITIALIZED};
-    Array_append(context->value_array, &val, 1);
-    v_val = Array_last_virt(context->value_array);
-    AVLTree_set(object->mapping, (uint64_t) v_key, v_val);
-  }
-
-  Value *val = Array_virt2real(context->value_array, v_val);
-  if (val->type != XJSON_VAL_UNINITIALIZED) { return nullptr; }
-
-  val->type = value->type;
-  val->size = value->size;
-  val->val.LONG_LONG_UINT = value->val.LONG_LONG_UINT;
-
-  return (Pair *) XJSON_TOKEN_Pair;
+Pairs * XJSON_Pairs_0 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
+  return (Pairs *) XJSON_TOKEN_Pairs;
 }
 
-Pairs * XJSON_Pairs_0 (Token args[], XJSONContext *, ErrInfo *, const Allocator *allocator) {
-  Pair *pair = args[0].value;
-
-  Pairs *pairs = Array_new(sizeof(Pair), XJSON_TOKEN_Pair, allocator);
-
-  Array_append(pairs, pair, 1);
-
-  return pairs;
-}
-
-Pairs * XJSON_Pairs_1 (Token args[], XJSONContext *, ErrInfo *, const Allocator *) {
-  Pairs *pairs = args[0].value;
-  Pair *pair = args[2].value;
-
-  Array_append(pairs, pair, 1);
-
-  return pairs;
+Pairs * XJSON_Pairs_1 (Token [], XJSONContext *, ErrInfo *, const Allocator *) {
+  return (Pairs *) XJSON_TOKEN_Pairs;
 }
 
 Path * XJSON_Path_0 (Token args[], XJSONContext *context, ErrInfo *, const Allocator *) {
@@ -223,7 +181,7 @@ Texts * XJSON_Texts_1 (Token args[], XJSONContext *context, ErrInfo *, const All
 Value * XJSON_Value_0 (Token args[], XJSONContext *context, ErrInfo *, const Allocator *) {
   Object *object = args->value;
 
-  Value value = { .type = XJSON_VAL_LIST, .size = Array_length(object->keys), .val.OBJECT = object };
+  Value value = { .type = XJSON_VAL_OBJECT, .size = Array_length(object->keys), .val.OBJECT = object };
   Array_append(context->value_array, &value, 1);
   REFER(Value) v_val = Array_last_virt(context->value_array);
 
