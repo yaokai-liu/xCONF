@@ -1,16 +1,16 @@
 ${license}
 
-#ifndef XJSON_TOKENS_H
-#define XJSON_TOKENS_H
+#ifndef XCONF_TOKENS_H
+#define XCONF_TOKENS_H
 
-#include "xJSON/char_t.h"
+#include "char_t.h"
 #include <stdint.h>
 
 enum TOKEN_TYPE_ENUM: uint32_t {
   ${enums},
-  XJSON_TOKEN_PLACE_HOLDER,
-  XJSON_MAX_TOTAL_TOKEN,
-  XJSON_TOKEN_BAD_TOKEN = UINT32_MAX
+  XCONF_TOKEN_PLACE_HOLDER,
+  XCONF_MAX_TOTAL_TOKEN,
+  XCONF_TOKEN_BAD_TOKEN = UINT32_MAX
 };
 extern const char_t *TOKEN_NAMES[];
-#endif  // XJSON_TOKENS_H
+#endif  // XCONF_TOKENS_H

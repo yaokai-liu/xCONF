@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,33 +17,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
- * Module Name: include/xJSON
- * Filename: error.h
+ * Project Name: xCONF
+ * Module Name: compose
+ * Filename: compose.h
  * Creator: Yaokai Liu
- * Create Date: 2025-06-07
+ * Create Date: 2025-06-12
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XJSON_ERROR_H
-#define XJSON_ERROR_H
+#ifndef XCONF_COMPOSE_H
+#define XCONF_COMPOSE_H
 
-#include "token.h"
+#include <stdint.h>
+#include <stdio.h>
+#include "xCONF/target.h"
+#include "xCONF/context.h"
 
-enum XLR_ERROR_CODE_ENUM {
-  XJSON_SUCCESS,
-  XJSON_ERROR_UNRECOGNIZED_SYMBOL,
-  XJSON_ERROR_UNEXPECTED_EOF,
+uint32_t writeList(FILE *file, List *list, uint32_t indent, XCONFContext *context);
+uint32_t writeValue(FILE *file, Value *value, uint32_t indent, XCONFContext *context);
+uint32_t writeObject(FILE *file, Object *object, uint32_t indent, XCONFContext *context);
 
-  XJSON_UNEXPECTED_TOKEN,
-};
-
-
-typedef struct ErrInfo {
-  Location pos;
-  uint32_t code;
-  int32_t  state;
-  uint32_t token;
-} ErrInfo;
-
-#endif //XJSON_ERROR_H
+#endif //XCONF_COMPOSE_H

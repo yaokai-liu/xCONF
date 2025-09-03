@@ -2,8 +2,8 @@ ${license}
 
 #include "action.h"
 #include "generated/tokens.gen.h"
-#include "generated/xJSON/rules.gen.h"
-#include "generated/xJSON/action-table.gen.h"
+#include "generated/xCONF/rules.gen.h"
+#include "generated/xCONF/action-table.gen.h"
 
 struct state {
   const uint16_t ndx_base;
@@ -16,36 +16,36 @@ struct unit {
   uint8_t offset;
 };
 
-const struct grammar_action XJSON_ACTIONS[];
-const uint16_t XJSON_JUMPS[];
-const struct unit XJSON_UNITS[];
-const struct state XJSON_STATES[];
-const uint32_t XJSON_CURRENT_TOKENS[];
+const struct grammar_action XCONF_ACTIONS[];
+const uint16_t XCONF_JUMPS[];
+const struct unit XCONF_UNITS[];
+const struct state XCONF_STATES[];
+const uint32_t XCONF_CURRENT_TOKENS[];
 
 const struct unit *getParseUnit(const state *state, uint32_t look);
 
-const struct grammar_action XJSON_ACTIONS[] = {
+const struct grammar_action XCONF_ACTIONS[] = {
   ${actions}
 };
 
-const uint16_t XJSON_JUMPS[] = {
+const uint16_t XCONF_JUMPS[] = {
   ${jumps}
 };
 
-const struct unit XJSON_UNITS[] = {
+const struct unit XCONF_UNITS[] = {
   ${units}
 };
 
-const struct state XJSON_STATES[] = {
+const struct state XCONF_STATES[] = {
   ${states}
 };
 
-const uint32_t XJSON_CURRENT_TOKENS[] = {
+const uint32_t XCONF_CURRENT_TOKENS[] = {
   ${currents}
 };
 
 inline const struct unit *getParseUnit(const state *state, uint32_t look) {
-  const struct unit *unit, *base = &XJSON_UNITS[state->token_base];
+  const struct unit *unit, *base = &XCONF_UNITS[state->token_base];
   int32_t left = 0, right = state->n_tokens - 1;
   int32_t u_idx = (left + right) / 2;
   unit = &base[u_idx];
@@ -64,20 +64,20 @@ inline const struct unit *getParseUnit(const state *state, uint32_t look) {
 
 
 inline const struct grammar_action *getParseAction(uint32_t index, uint32_t ahead) {
-    const state *state = &XJSON_STATES[index];
+    const state *state = &XCONF_STATES[index];
     const struct unit *unit = getParseUnit(state, ahead);
     if (!unit) { return nullptr; }
-    const struct grammar_action *act = &XJSON_ACTIONS[state->ndx_base + unit->offset];
+    const struct grammar_action *act = &XCONF_ACTIONS[state->ndx_base + unit->offset];
     return act;
 }
 
 inline uint32_t parseJumpState(uint32_t index, uint32_t current) {
-    const state *state = &XJSON_STATES[index];
+    const state *state = &XCONF_STATES[index];
     const struct unit *unit = getParseUnit(state, current);
-    if (!unit) { return XJSON_BAD_STATE; }
-    return XJSON_JUMPS[state->goto_base + unit->offset];
+    if (!unit) { return XCONF_BAD_STATE; }
+    return XCONF_JUMPS[state->goto_base + unit->offset];
 }
 
 inline uint32_t getParseStateCurrentTokenType(int32_t state) {
-    return XJSON_CURRENT_TOKENS[state];
+    return XCONF_CURRENT_TOKENS[state];
 }

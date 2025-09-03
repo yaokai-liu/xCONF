@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,39 +17,43 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
- * Module Name: grammar/xJSON
+ * Project Name: xCONF
+ * Module Name: grammar/xCONF
  * Filename: context.h
  * Creator: Yaokai Liu
  * Create Date: 2025-06-07
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XJSON_GRAMMAR_XJSON_CONTEXT_H
-#define XJSON_GRAMMAR_XJSON_CONTEXT_H
+#ifndef XCONF_GRAMMAR_XCONF_CONTEXT_H
+#define XCONF_GRAMMAR_XCONF_CONTEXT_H
 
-#include "xJSON/error.h"
+#include "xCONF/xCONF.h"
 #include "array.h"
 #include "trie.h"
 #include "target.h"
 #include "stack.h"
+#include "error_info.h"
 
-typedef struct XJSONContext {
+typedef struct XCONFContext {
   const Allocator *allocator;
-  Array   *key_array;     // Array<char_t>
   Trie    *key_trie;      // Trie<char_t, REFER(char_t)>
+  Array   *key_array;     // Array<char_t>
   Array   *text_array;    // Array<char_t>
   Array   *value_array;   // Array<Value>
   Stack   *obj_stack;     // Stack<Object>
   Object  *object;
-} XJSONContext;
+} XCONFContext;
 
-void XJSONContext_state_action(XJSONContext *context, uint32_t state, Token *, const Allocator *allocator);
+XCONFContext *XCONFContext_new(const Allocator *allocator);
+void XCONFContext_destroy(XCONFContext *context);
 
-REFER(char_t) XJSONContent_new_text_content(XJSONContext *context, const char_t *text_content, uint32_t size);
+void XCONFContext_state_action(XCONFContext *context, uint32_t state, Token *, const Allocator *allocator);
 
-#define XJSONContent_add_text_content(context, text_content, size) \
+REFER(char_t) XCONFContent_new_text_content(XCONFContext *context, const char_t *text_content, uint32_t size);
+
+#define XCONFContent_add_text_content(context, text_content, size) \
                          Array_append((context)->text_array, (text_content), (size))
 
 
-#endif //XJSON_GRAMMAR_XJSON_CONTEXT_H
+#endif //XCONF_GRAMMAR_XCONF_CONTEXT_H

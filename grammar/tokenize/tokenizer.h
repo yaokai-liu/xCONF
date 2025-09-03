@@ -25,21 +25,25 @@
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XJSON_GRAMMAR_TOKENIZE_TOKENIZER_H
-#define XJSON_GRAMMAR_TOKENIZE_TOKENIZER_H
+#ifndef XCONF_GRAMMAR_TOKENIZE_TOKENIZER_H
+#define XCONF_GRAMMAR_TOKENIZE_TOKENIZER_H
 
-#include "xJSON/token.h"
-#include "xJSON/error.h"
+#include "token.h"
+#include "xCONF/xCONF.h"
 #include "array.h"
 #include "trie.h"
+#include "error_info.h"
 
-typedef struct Tokenizer Tokenizer;
+typedef struct XCONFTokenizer XCONFTokenizer;
 
-Tokenizer *XJSONTokenizer_new(const char_t *src, Array *ident_array, Trie *ident_trie, const Allocator *allocator);
+XCONFTokenizer *XCONFTokenizer_new(const char_t *src, Array *ident_array, Trie *ident_trie, const Allocator *allocator);
+
+void XCONFTokenizer_setSrc(XCONFTokenizer *tokenizer, const char_t *src);
+void XCONFTokenizer_concatSrc(XCONFTokenizer *tokenizer, const char_t *src);
 
 uint32_t
-XJSONTokenizer_next(Tokenizer *tokenizer, Token *token, ErrInfo *errInfo, const Allocator *allocator);
+XCONFTokenizer_next(XCONFTokenizer *tokenizer, Token *token, ErrInfo *errInfo, const Allocator *allocator);
 
-void XJSONTokenizer_destroy(Tokenizer *tokenizer);
+void XCONFTokenizer_destroy(XCONFTokenizer *tokenizer);
 
-#endif //XJSON_GRAMMAR_TOKENIZE_TOKENIZER_H
+#endif //XCONF_GRAMMAR_TOKENIZE_TOKENIZER_H

@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
+ * Project Name: xCONF
  * Module Name: test
  * Filename: debug.c
  * Creator: Yaokai Liu
@@ -27,15 +27,6 @@
 
 #include <stdio.h>
 #include <stdint.h>
-
-#include "ieee754.h"
-
 int main () {
-  float64_t a  = ieee754bin64(0, 0b1100100100001111110110101010001000100001011010001101010100101ULL, 1);
-//  float64_t a  = ieee754bin64(0, 0b110010010000111111011ULL, 1);
-//  float64_t a  = ieee754bin64(0, 0, 1024);
-  uint64_t *pa = (uint64_t *)&a;
-  printf("%.064lf\n", a);
-  printf("%.064lb\n", *pa);
   return 0;
 }

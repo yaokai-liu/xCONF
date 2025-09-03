@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
+ * Project Name: xCONF
  * Module Name: grammar
  * Filename: target.h
  * Creator: Yaokai Liu
@@ -25,46 +25,62 @@
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XJSON_GRAMMAR_TARGET_H
-#define XJSON_GRAMMAR_TARGET_H
+#ifndef XCONF_GRAMMAR_TARGET_H
+#define XCONF_GRAMMAR_TARGET_H
 
 #include "array.h"
-#include "xJSON/extint.h"
-#include "xJSON/token.h"
-#include "xJSON/enum.h"
-#include "avl-tree.h"
 #include "dict.h"
+#include "token.h"
+#include "avl-tree.h"
+#include "xCONF/xCONF.h"
 
 
-typedef Array List; // Array<REFER(Value)>
 typedef struct Text Text;
 typedef struct Value Value;
-typedef struct Object Object;
+typedef struct Array List; // Array<REFER(Value)>
+typedef struct XCONFObject XCONFObject, Object;
 
 typedef struct Text {
   uint32_t      size;
   REFER(char_t) content;
 } Text;
 
-typedef struct Object {
+typedef struct XCONFObject {
   Array *   keys;     // Array<REFER(char_t)>
-  AVLTree * mapping;  // AVLTree<REFER(char_t), REFER(Value>>
-} Object;
+  AVLTree * mapping;  // AVLTree<REFER(char_t), REFER(Value)>
+} XCONFObject;
+
+enum XCONF_VALUE_CATEGORY_ENUM: uint32_t {
+  XCONF_VAL_CAT_NULL,
+  XCONF_VAL_CAT_LIST,
+  XCONF_VAL_CAT_TEXT,
+  XCONF_VAL_CAT_OBJECT,
+  XCONF_VAL_CAT_BOOLEAN,
+
+  XCONF_VAL_CAT_INT,
+  XCONF_VAL_CAT_UINT,
+  XCONF_VAL_CAT_FLOAT,
+
+  XCONF_VAL_CAT_UNINITIALIZED = UINT32_MAX,
+};
 
 typedef struct Value {
-  XJSON_val_type   type;
+  enum XCONF_VALUE_TYPE_ENUM   type;
   uint32_t      size;
   union {
-    List *        LIST;
+    int32_t       I32;
+    uint32_t      U32;
+    int64_t       I64;
+    uint64_t      U64;
+    int128_t      I128;
+    uint128_t     U128;
+    float32_t     F32;
+    float64_t     F64;
+    float128_t    F128;
     Text *        TEXT;
-    uint32_t      UINT;
-    float         FLOAT;
-    double        DOUBLE;
-    Object *      OBJECT;
     bool          BOOLEAN;
-    uint64_t      LONG_UINT;
-    long double   LONG_DOUBLE;
-    uint128_t     LONG_LONG_UINT;
+    Object *      OBJECT;
+    List *        LIST;
   } val;
 } Value;
 
@@ -100,4 +116,4 @@ void releaseObject(Object *, const Allocator *);
 void releaseList(List *, const Allocator *);
 void releaseWrapperedText(WrapperedText *, const Allocator *);
 
-#endif //XJSON_GRAMMAR_TARGET_H
+#endif //XCONF_GRAMMAR_TARGET_H

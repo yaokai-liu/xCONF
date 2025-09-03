@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
+ * Project Name: xCONF
  * Module Name: grammar
  * Filename: action.h
  * Creator: Yaokai Liu
@@ -25,17 +25,17 @@
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XJSON_GRAMMAR_ACTION_H
-#define XJSON_GRAMMAR_ACTION_H
+#ifndef XCONF_GRAMMAR_ACTION_H
+#define XCONF_GRAMMAR_ACTION_H
 
 #include <stdint.h>
 
 typedef struct state state;
 struct grammar_action {
   enum : uint8_t {
-    XJSON_action_reject = 0,
-    XJSON_action_stack = 1,
-    XJSON_action_reduce = 2
+    XCONF_action_reject = 0,
+    XCONF_action_stack = 1,
+    XCONF_action_reduce = 2
   } action      : 4;
   uint8_t count : 4;
   uint8_t type;
@@ -43,4 +43,4 @@ struct grammar_action {
 };
 
 
-#endif //XJSON_GRAMMAR_ACTION_H
+#endif //XCONF_GRAMMAR_ACTION_H

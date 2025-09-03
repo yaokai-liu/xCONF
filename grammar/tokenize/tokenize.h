@@ -29,8 +29,8 @@
 #define XLR_GRAMMAR_TOKENIZE_TOKENIZE_H
 
 #include <stdint.h>
-#include "xJSON/char_t.h"
-#include "xJSON/token.h"
+#include "char_t.h"
+#include "token.h"
 
 uint32_t single_tokenize(const char_t *input, Terminal *result, const Allocator *allocator);
 uint32_t pass_space(const char *input, uint32_t *lineno, uint32_t *column);

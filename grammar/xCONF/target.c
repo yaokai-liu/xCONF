@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
+ * Project Name: xCONF
  * Module Name: grammar
  * Filename: target.c
  * Creator: Yaokai Liu
@@ -30,8 +30,8 @@
 
 void releaseValue(Value *val, const Allocator *allocator) {
   switch (val->type) {
-    case XJSON_VAL_LIST: { return releaseList(val->val.LIST, allocator); }
-    case XJSON_VAL_OBJECT: { return releaseObject(val->val.OBJECT, allocator); }
+    case XCONF_VAL_LIST: { return releaseList(val->val.LIST, allocator); }
+    case XCONF_VAL_OBJECT: { return releaseObject(val->val.OBJECT, allocator); }
     default:{}
   }
 }
@@ -43,6 +43,7 @@ void releasePair(Pair *, const Allocator *) {
 void releaseWrapperedText(WrapperedText *text, const Allocator *allocator) {
   if (text->content) { allocator->free(text->content); }
   text->content = nullptr;
+  text->length = 0;
   text->n_pred = 0;
   text->n_succ = 0;
 }

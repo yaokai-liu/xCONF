@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * ${PROJECT_DESCRIPTION}
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,29 +17,44 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
- * Module Name: include/xJSON
- * Filename: enum.h
+ * Project Name: xCONF
+ * Module Name: grammar
+ * Filename: error.h
  * Creator: Yaokai Liu
- * Create Date: 2025-06-07
+ * Create Date: 2025-09-03
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XJSON_ENUM_H
-#define XJSON_ENUM_H
+#ifndef XCONF_GRAMMAR_ERROR_INFO_H
+#define XCONF_GRAMMAR_ERROR_INFO_H
 
-typedef enum XJSON_VALUE_TYPE_ENUM: uint32_t {
-  XJSON_VAL_NULL,
-  XJSON_VAL_LIST,
-  XJSON_VAL_TEXT,
-  XJSON_VAL_OBJECT,
-  XJSON_VAL_BOOLEAN,
+#include <stdint.h>
+typedef struct ErrInfo {
+  /**
+   * @description offset in src string
+   */
+  uint32_t offset;
+  /**
+   * @description line number in src file
+   */
+  uint32_t lineno;
+  /**
+   * @description column offset in the line in src file
+   */
+  uint32_t column;
+  /**
+   * @description error code
+   */
+  uint32_t code;
+  /**
+   * @description   file that error occurs
+   */
+  const char * file;
+  /**
+   * @description   the token type
+   */
+  uint32_t token;
+} ErrInfo;
 
-  XJSON_VAL_INT,
-  XJSON_VAL_UINT,
-  XJSON_VAL_FLOAT,
 
-  XJSON_VAL_UNINITIALIZED,
-} XJSON_val_type;
-
-#endif //XJSON_ENUM_H
+#endif //XCONF_GRAMMAR_ERROR_INFO_H

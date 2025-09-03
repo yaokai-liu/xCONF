@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,23 +17,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
- * Module Name: utils
- * Filename: ieee754.h
+ * Project Name: xCONF
+ * Module Name: driver
+ * Filename: driver.h
  * Creator: Yaokai Liu
- * Create Date: 2025-06-08
+ * Create Date: 2025-06-11
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XJSON_UTILS_IEEE754_H
-#define XJSON_UTILS_IEEE754_H
+#ifndef XCONF_DRIVER_DRIVER_H
+#define XCONF_DRIVER_DRIVER_H
 
-#include <stdint.h>
-#include "xJSON/extint.h"
-#include "xJSON/extfloat.h"
-
-float32_t ieee754bin32(bool sign, uint32_t integer, uint8_t exponent);
-float64_t ieee754bin64(bool sign, uint64_t integer, uint16_t exponent);
-float128_t ieee754bin128(bool sign, uint128_t integer, uint16_t exponent);
-
-#endif //XJSON_UTILS_IEEE754_H
+#endif //XCONF_DRIVER_DRIVER_H

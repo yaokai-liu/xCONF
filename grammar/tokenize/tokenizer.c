@@ -28,9 +28,9 @@
 #include "tokenizer.h"
 #include "tokenize.h"
 #include "generated/tokens.gen.h"
-#include "generated/xJSON/action-table.gen.h"
+#include "generated/xCONF/action-table.gen.h"
 
-typedef struct Tokenizer {
+typedef struct XCONFTokenizer {
   const Allocator *allocator;
   const char_t *src;
   uint32_t offset;
@@ -38,10 +38,10 @@ typedef struct Tokenizer {
   uint32_t column;
   Array *  ident_array;  // Array<Identifier>
   Trie *   ident_trie;   // Trie<char_t, Identifier>
-} Tokenizer;
+} XCONFTokenizer;
 
-Tokenizer *XJSONTokenizer_new(const char_t *src, Array *ident_array, Trie *ident_trie, const Allocator *allocator) {
-  Tokenizer *tokenizer = allocator->calloc(1, sizeof(Tokenizer));
+XCONFTokenizer *XCONFTokenizer_new(const char_t *src, Array *ident_array, Trie *ident_trie, const Allocator *allocator) {
+  XCONFTokenizer *tokenizer = allocator->calloc(1, sizeof(XCONFTokenizer));
   tokenizer->ident_array = ident_array;
   tokenizer->ident_trie = ident_trie;
   tokenizer->allocator = allocator;
@@ -52,29 +52,40 @@ Tokenizer *XJSONTokenizer_new(const char_t *src, Array *ident_array, Trie *ident
   return tokenizer;
 }
 
-void XJSONTokenizer_destroy(Tokenizer *tokenizer) {
+void XCONFTokenizer_setSrc(XCONFTokenizer *tokenizer, const char_t *src) {
+  tokenizer->lineno = 1;
+  tokenizer->column = 1;
+  tokenizer->offset = 0;
+  tokenizer->src = src;
+}
+
+void XCONFTokenizer_concatSrc(XCONFTokenizer *tokenizer, const char_t *src) {
+  tokenizer->src = src;
+}
+
+void XCONFTokenizer_destroy(XCONFTokenizer *tokenizer) {
   tokenizer->allocator->free(tokenizer);
 }
 
 #define pText (tokenizer->src + tokenizer->offset)
 uint32_t
-XJSONTokenizer_next(Tokenizer *tokenizer, Token *token, ErrInfo *errInfo, const Allocator *allocator) {
+XCONFTokenizer_next(XCONFTokenizer *tokenizer, Token *token, ErrInfo *errInfo, const Allocator *allocator) {
   tokenizer->offset += pass_space(pText, &tokenizer->lineno, &tokenizer->column);
   Terminal terminal = {};
-  terminal.type = XJSON_TOKEN_BAD_TOKEN;
+  terminal.type = XCONF_TOKEN_BAD_TOKEN;
   terminal.location.lineno = tokenizer->lineno;
   terminal.location.column = tokenizer->column;
   terminal.location.offset = tokenizer->offset;
   const uint32_t length = single_tokenize(pText, &terminal, allocator);
-  if (terminal.type == XJSON_TOKEN_BAD_TOKEN) {
-    errInfo->pos.lineno = tokenizer->lineno;
-    errInfo->pos.column = tokenizer->column;
-    errInfo->pos.offset = tokenizer->offset;
-    errInfo->code = XJSON_ERROR_UNRECOGNIZED_SYMBOL;
+  if (terminal.type == XCONF_TOKEN_BAD_TOKEN) {
+    errInfo->lineno = tokenizer->lineno;
+    errInfo->column = tokenizer->column;
+    errInfo->offset = tokenizer->offset;
+    errInfo->code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
     return errInfo->code;
   }
   terminal2Token(&terminal, token);
   tokenizer->offset += length;
   tokenizer->column += length;
-  return XJSON_SUCCESS;
+  return XCONF_SUCCESS;
 }

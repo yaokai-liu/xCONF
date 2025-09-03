@@ -26,12 +26,11 @@
  **/
 
 #include "tokenize.h"
-#include "xJSON/target.h"
+#include "xCONF/target.h"
 #include "string_t.h"
-#include "xJSON/token.h"
+#include "token.h"
 #include "generated/tokens.gen.h"
-#include "xJSON/enum.h"
-#include "xJSON/extfloat.h"
+#include "xCONF/xCONF.h"
 #include <tgmath.h>
 
 #define lenof(str_literal) ((sizeof str_literal) - 1)
@@ -277,10 +276,10 @@ static const uint32_t ADIC_BASE[] = {
 
 /*
  * if adic
- * is ADIC_TYPE_16:    [a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?|[uU]|)[lL]{0,2}
- * is ADIC_TYPE_10:    [01]+(\.[01]+([eE][+-]?[0-9]+)?|[uU]|)[lL]{0,2}
- * is ADIC_TYPE_8:     [0-7]+(\.[0-7]+([eE][+-]?[0-9]+)?|[uU]|)[lL]{0,2}
- * is ADIC_TYPE_2:     [0-9]+(\.[0-9]+([eE][+-]?[0-9]+)?|[uU]|)[lL]{0,2}
+ * is ADIC_TYPE_16:    [a-fA-F0-9]+((\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?[lL]{0,2})|[lL]{0,2}[uU]?)
+ * is ADIC_TYPE_10:    [01]+((\.[01]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2})|[lL]{0,2}[uU]?)
+ * is ADIC_TYPE_8:     [0-7]+((\.[0-7]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}|[lL]{0,2}[uU]?)
+ * is ADIC_TYPE_2:     [0-9]+((\.[0-9]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}|[lL]{0,2}[uU]?)
  */
 uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
                          const bool negative , const uint32_t adic, const Allocator *const allocator) {
@@ -292,13 +291,12 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
   uint32_t int_eff_length = 0;
   uint32_t frac_eff_length = 0;
   bool exp_negative = false;
-  XJSON_val_type type = XJSON_VAL_INT;
+  enum XCONF_VALUE_CATEGORY_ENUM type = XCONF_VAL_CAT_INT;
 
   uint32_t length = DIGITAL_FUNC_TOOLS[adic][INT_DIGITAL_FUNC](pText, &int_eff_length, &integer);
-  if (!length) { return 0; }
-  if ((*pText == 'u') || (*pText == 'U')) { type = XJSON_VAL_UINT; }
-  else if (*pText == '.') {
-    type = XJSON_VAL_FLOAT; size = 8; pText ++;
+  if (!length) { return 0; } else { pText += length; }
+  if (*pText == '.') {
+    type = XCONF_VAL_CAT_FLOAT; size = 4; pText ++;
     length = DIGITAL_FUNC_TOOLS[adic][FRAC_DIGITAL_FUNC](pText, &frac_eff_length, &integer);
     if (!length) { return 0; }
     if (*pText == 'p' || *pText == 'P' || *pText == 'e' || *pText == 'E') {
@@ -308,7 +306,6 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
       length = DIGITAL_FUNC_TOOLS[adic][INT_DIGITAL_FUNC](pText, nullptr, &exponent);
       if (!length) { return 0; }
     }
-    if (*pText == 'f' || *pText == 'F') { size = 4; }
     exponent = exp_negative ? -exponent : exponent;
     exponent += int_eff_length;
     exponent -= frac_eff_length;
@@ -316,33 +313,50 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
   if ((*pText == 'l') || (*pText == 'L')) { size *= 2; }
   if ((*pText == 'l') || (*pText == 'L')) { size *= 2; }
   size = min(size, 16);
+  if ((*pText == 'u') || (*pText == 'U')) {
+    if (type == XCONF_VAL_CAT_FLOAT) { return 0; }
+    else { type = XCONF_VAL_CAT_UINT; }
+  }
   if (isKeyChar(pText) || *pText == '.') { return 0; }
 
   Value *value = allocator->calloc(1, sizeof(Value));
-  value->type = type;
   value->size = size;
-  if (type == XJSON_VAL_FLOAT) {
+  // TODO:
+  //  The value obtained in this way is not accurate enough.
+  //  Please try to improve the algorithm.
+  if (type == XCONF_VAL_CAT_FLOAT) {
     const uint32_t exponent_base = ADIC_BASE[adic];
     if (size == 4 ) {
       float32_t real = ((float32_t) (uint32_t) integer);
-      float32_t exp = (float32_t) pow((uint32_t) exponent_base, (int32_t) exponent);
-      value->val.FLOAT = (negative) ? -real * exp : real * exp;
+      float32_t exp = (float32_t) pow((float32_t) exponent_base, (int32_t) exponent);
+      value->val.F32 = (negative) ? -real * exp : real * exp;
+      value->type = XCONF_VAL_F32;
     } else if (size == 8 ) {
       float64_t real = ((float64_t) (uint64_t) integer);
-      float64_t exp = (float64_t) pow((uint64_t) exponent_base, (int64_t) exponent);
-      value->val.DOUBLE = (negative) ? -real * exp : real * exp;
+      float64_t exp = (float64_t) pow((float64_t) exponent_base, (int64_t) exponent);
+      value->val.F64 = (negative) ? -real * exp : real * exp;
+      value->type = XCONF_VAL_F64;
     } else if (size == 16) {
       float128_t real = ((float128_t) (uint128_t) integer);
-      float128_t exp = (float128_t) pow((uint128_t) exponent_base, (int128_t) exponent);
-      value->val.LONG_DOUBLE = (negative) ? -real * exp : real * exp;
-    }
-  } else {
+      float128_t exp = (float128_t) pow((float128_t) exponent_base, (int128_t) exponent);
+      value->val.F128 = (negative) ? -real * exp : real * exp;
+      value->type = XCONF_VAL_F128;
+    } else { return 0; }
+  } else if (type == XCONF_VAL_CAT_UINT) {
     if (negative) { integer = -integer; }
-    if (size == 4) { value->val.UINT = integer; }
-    else if (size == 8) { value->val.LONG_UINT = integer; }
-    else if (size == 16) { value->val.LONG_LONG_UINT = integer; }
-  }
-  result->type = XJSON_TOKEN_NUMBER;
+    if (size == 4) { value->val.U32 = integer; value->type = XCONF_VAL_U32; }
+    else if (size == 8) { value->val.U64 = integer; value->type = XCONF_VAL_U64; }
+    else if (size == 16) { value->val.U128 = integer; value->type = XCONF_VAL_U128; }
+    else { return 0; }
+  } else if (type == XCONF_VAL_CAT_INT) {
+    if (negative) { integer = -integer; }
+    if (size == 4) { value->val.I32 = integer; value->type = XCONF_VAL_I32; }
+    else if (size == 8) { value->val.I64 = integer; value->type = XCONF_VAL_I64; }
+    else if (size == 16) { value->val.I128 = integer; value->type = XCONF_VAL_I128; }
+    else { return 0; }
+  } else { return 0; }
+
+  result->type = XCONF_TOKEN_NUMBER;
   result->length = pText - input;
   result->value = value;
   return result->length;
@@ -372,7 +386,7 @@ uint32_t t_KEY(const char_t * const input, Terminal * const result, const Alloca
   if (*(pText - 1) == '-') { result->length = pText - input; return 0; }
 
   const uint32_t length = pText - input;
-  result->type = XJSON_TOKEN_KEY;
+  result->type = XCONF_TOKEN_KEY;
   result->value = allocator->malloc((length + 1) * sizeof(char_t));
   allocator->memcpy(result->value, input, length);
   ((char_t *) result->value)[length] = '\0';
@@ -388,10 +402,10 @@ uint32_t t_KEY(const char_t * const input, Terminal * const result, const Alloca
 } while(false)
 
 /*
- * [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?|[uU]|)[lL]{0,2} |
- * [+-]?0[bB][01]+(\.[01]+([eE][+-]?[0-9]+)?|[uU]|)[lL]{0,2} |
- * [+-]?0[oO]?[0-7]+(\.[0-7]+([eE][+-]?[0-9]+)?|[uU]|)[lL]{0,2} |
- * [+-]?[0-9]+(\.[0-9]+([eE][+-]?[0-9]+)?|[uU]|)[lL]{0,2}
+ * [+-]?0[xX][a-fA-F0-9]+((\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?[lL]{0,2})|[lL]{0,2}[uU]?) |
+ * [+-]?0[bB][01]+((\.[01]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2})|[lL]{0,2}[uU]?) |
+ * [+-]?0[oO]?[0-7]+((\.[0-7]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}|[lL]{0,2}[uU]?) |
+ * [+-]?[0-9]+((\.[0-9]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}|[lL]{0,2}[uU]?)
  */
 uint32_t tokenize_number(const char_t * const input, Terminal * const result, const Allocator * const allocator) {
   const char_t *pText = input;
@@ -414,7 +428,7 @@ uint32_t tokenize_number(const char_t * const input, Terminal * const result, co
       default: {}
     }
   }
-  tokenize_adic_number(0, 10);
+  tokenize_adic_number(0, ADIC_TYPE_10);
 }
 
 // ${pred}.*${succ}
@@ -433,7 +447,7 @@ uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,
   }
 
   const uint32_t length = n_pred + pText - input + n_succ;
-  result->type = XJSON_TOKEN_TEXT;
+  result->type = XCONF_TOKEN_TEXT;
   WrapperedText *text = allocator->calloc(1, sizeof(WrapperedText));
   text->n_pred = n_pred;
   text->n_succ = n_succ;
@@ -454,7 +468,7 @@ uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,
     }                                                                                       \
     const char_t * const tail = &input[sizeof(pattern) - 1 - offs];                         \
     if (isKeyChar(tail)) { goto __failed_kw_##_kw; }                                        \
-    result->type = XJSON_TOKEN_##_type;                                                     \
+    result->type = XCONF_TOKEN_##_type;                                                     \
     result->value = (void *) val;                                                           \
     result->length = lenof(#_kw);                                                           \
     return lenof(#_kw);                                                                     \
@@ -469,15 +483,15 @@ fn_try_keyword_val(TRUE, BOOLEAN, 1)
 fn_try_keyword_val(NULL, NULL, 0)
 
 constexpr uint32_t TERMINAL_TYPE_LITERALS[] = {
-  XJSON_TOKEN_DOT,
-  XJSON_TOKEN_COMMA,
-  XJSON_TOKEN_ASSIGN,
-  XJSON_TOKEN_ASSIGN,
+  XCONF_TOKEN_DOT,
+  XCONF_TOKEN_COMMA,
+  XCONF_TOKEN_ASSIGN,
+  XCONF_TOKEN_ASSIGN,
 
-  XJSON_TOKEN_LEFT_BRACKET,
-  XJSON_TOKEN_RIGHT_BRACKET,
-  XJSON_TOKEN_LEFT_SQUARE_BRACKET,
-  XJSON_TOKEN_RIGHT_SQUARE_BRACKET,
+  XCONF_TOKEN_LEFT_BRACKET,
+  XCONF_TOKEN_RIGHT_BRACKET,
+  XCONF_TOKEN_LEFT_SQUARE_BRACKET,
+  XCONF_TOKEN_RIGHT_SQUARE_BRACKET,
 };
 uint32_t tokenize_single_symbol(const char_t * const input, Terminal * const result, const Allocator * const) {
   constexpr char_t SINGLE_LITERAL[] = ".,:={}[]";
@@ -494,7 +508,7 @@ uint32_t tokenize_single_symbol(const char_t * const input, Terminal * const res
 uint32_t single_tokenize(const char_t * const input, Terminal * const result,
                          const Allocator * const allocator) {
   if (!*input) {
-    result->type = XJSON_TOKEN_TERMINATOR;
+    result->type = XCONF_TOKEN_TERMINATOR;
     result->value = nullptr;
     result->length = 0;
     return 0;
@@ -522,7 +536,7 @@ uint32_t single_tokenize(const char_t * const input, Terminal * const result,
   }
   length = t_KEY(input, result, allocator);
   if (length > 0) { return length; }
-  result->type = XJSON_TOKEN_BAD_TOKEN;
+  result->type = XCONF_TOKEN_BAD_TOKEN;
   result->value = nullptr;
   result->length = 0;
   return 0;

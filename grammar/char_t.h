@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,22 +17,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
- * Module Name: utils
- * Filename: extint.h
+ * Project Name: xCONF
+ * Module Name: grammar
+ * Filename: char_t.h
  * Creator: Yaokai Liu
- * Create Date: 2025-06-08
+ * Create Date: 2025-06-07
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XJSON_EXT_INT_H
-#define XJSON_EXT_INT_H
+#ifndef CHAR_T_H
+#define CHAR_T_H
 
-#include <stdint.h>
+// Promise that sizeof(char_t) < sizeof(uint64_t).
+typedef char char_t;
 
-typedef signed    _BitInt(128) int128_t;
-typedef unsigned  _BitInt(128) uint128_t;
-typedef signed    _BitInt(256) int256_t;
-typedef unsigned  _BitInt(256) uint256_t;
+#define string_t(_str) _str
 
-#endif //XJSON_EXT_INT_H
+#endif //CHAR_T_H

@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
+ * Project Name: xCONF
  * Module Name: grammar
  * Filename: token.c
  * Creator: Yaokai Liu
@@ -28,9 +28,9 @@
 
 #include "allocator.h"
 #include "array.h"
-#include "xJSON/target.h"
+#include "xCONF/target.h"
 #include "generated/tokens.gen.h"
-#include "xJSON/token.h"
+#include "token.h"
 
 const char_t *get_token_type_name(uint16_t type) {
   return TOKEN_NAMES[type];
@@ -38,13 +38,13 @@ const char_t *get_token_type_name(uint16_t type) {
 
 
 #define releaseArrayCase(array, ele)                        \
-  case XJSON_TOKEN_##array: {                               \
+  case XCONF_TOKEN_##array: {                               \
     Array_reset(token->value, (destruct_t *) release##ele); \
     Array_destroy(token->value);                            \
     break;                                                  \
   }
 #define releaseTokenCase(t, r)           \
-  case XJSON_TOKEN_##t: {                \
+  case XCONF_TOKEN_##t: {                \
     release##r(token->value, allocator); \
     break;                               \
   }
@@ -63,7 +63,7 @@ void releaseToken(Token *token, const Allocator *allocator) {
     releaseTokenCase(List, List)
     releaseTokenCase(NUMBER, Value)
     releaseTokenCase(TEXT, WrapperedText)
-    case XJSON_TOKEN_KEY: {
+    case XCONF_TOKEN_KEY: {
       if (token->value) { allocator->free(token->value); }
     }
     default: {}

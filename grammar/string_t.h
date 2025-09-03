@@ -1,6 +1,6 @@
 /* License
  *
- * xJSON - C Library to Parse xJSON to C
+ * xCONF - C Library to Parse xCONF to C
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
- * Project Name: xJSON
+ * Project Name: xCONF
  * Module Name: grammar
  * Filename: string_t.h
  * Creator: Yaokai Liu
@@ -25,13 +25,13 @@
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XJSON_GRAMMAR_STRING_T_H
-#define XJSON_GRAMMAR_STRING_T_H
+#ifndef XCONF_GRAMMAR_STRING_T_H
+#define XCONF_GRAMMAR_STRING_T_H
 
 #include <stdint.h>
-#include "xJSON/char_t.h"
+#include "char_t.h"
 
 uint32_t stridx_o(char_t chr, const char_t *str);
 uint32_t strcmp_o(const char_t *str1, const char_t *str2);
 
-#endif //XJSON_GRAMMAR_STRING_T_H
+#endif //XCONF_GRAMMAR_STRING_T_H

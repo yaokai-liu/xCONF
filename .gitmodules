@@ -1,5 +1,5 @@
 [submodule "liu-xJSON"]
-	path = liu-xJSON
+	path = liu-xCONF
 	url = git@github.com:yaokai-liu/Xnf.git
 	branch = liu-xJSON
 [submodule "xnf-json2C"]
