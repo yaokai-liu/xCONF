@@ -74,9 +74,12 @@ typedef struct Value {
     uint64_t      U64;
     int128_t      I128;
     uint128_t     U128;
+    int256_t      I256;
+    uint256_t     U256;
     float32_t     F32;
     float64_t     F64;
     float128_t    F128;
+    float256_t    F256;
     Text *        TEXT;
     bool          BOOLEAN;
     Object *      OBJECT;

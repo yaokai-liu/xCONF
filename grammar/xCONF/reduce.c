@@ -64,7 +64,7 @@ Pair * XCONF_Pair_0 (Token args[], XCONFContext *context, ErrInfo *, const Alloc
 
 Pair * XCONF_Pair_1 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
   Path *path = args[1].value;
-  Value *value = args[3].value;
+  Value *value = args[4].value;
 
   Value *val = Array_virt2real(context->value_array, path);
   if (val->type != XCONF_VAL_UNINITIALIZED) { return nullptr; }
@@ -75,6 +75,29 @@ Pair * XCONF_Pair_1 (Token args[], XCONFContext *context, ErrInfo *, const Alloc
 }
 
 Pair * XCONF_Pair_2 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
+  Path *path = args[1].value;
+  Value *value = args[3].value;
+
+  Value *val = Array_virt2real(context->value_array, path);
+  if (val->type != XCONF_VAL_UNINITIALIZED) { return nullptr; }
+
+  allocator->memcpy(val, value, sizeof(Value));
+
+  return (Pair *) XCONF_TOKEN_Pair;
+}
+
+Pair * XCONF_Pair_3 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
+  Path *path = args[0].value;
+  Value *value = args[2].value;
+
+  Value *val = Array_virt2real(context->value_array, path);
+  if (val->type != XCONF_VAL_UNINITIALIZED) { return nullptr; }
+
+  allocator->memcpy(val, value, sizeof(Value));
+  return (Pair *) XCONF_TOKEN_Pair;
+}
+
+Pair * XCONF_Pair_4 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
   Path *path = args[0].value;
   Value *value = args[2].value;
 
@@ -166,7 +189,7 @@ Texts * XCONF_Texts_1 (Token args[], XCONFContext *context, ErrInfo *, const All
 
   Texts *texts = allocator->calloc(1, sizeof(Texts));
 
-  texts->content = XCONFContent_new_text_content(context, text->content, text->length);
+  texts->content = XCONFContext_new_text_content(context, text->content, text->length);
   texts->size = text->length;
 
   return texts;
@@ -175,7 +198,7 @@ Texts * XCONF_Texts_1 (Token args[], XCONFContext *context, ErrInfo *, const All
 Value * XCONF_Value_0 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
   Object *object = args->value;
 
-  Value value = { .type = XCONF_VAL_OBJECT, .size = Array_length(object->keys), .val.OBJECT = object };
+  Value value = { .type = XCONF_VAL_OBJECT, .size = 0, .val.OBJECT = object };
   Array_append(context->value_array, &value, 1);
   REFER(Value) v_val = Array_last_virt(context->value_array);
 
@@ -185,7 +208,7 @@ Value * XCONF_Value_0 (Token args[], XCONFContext *context, ErrInfo *, const All
 Value * XCONF_Value_1 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
   List *list = args->value;
 
-  Value value = { .type = XCONF_VAL_LIST, .size = Array_length(list), .val.LIST = list };
+  Value value = { .type = XCONF_VAL_LIST, .size = 0, .val.LIST = list };
 
   Array_append(context->value_array, &value, 1);
   REFER(Value) v_val = Array_last_virt(context->value_array);

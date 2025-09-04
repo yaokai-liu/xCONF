@@ -62,5 +62,5 @@ void releaseObject(Object *object, const Allocator *) {
 }
 
 void releaseList(List *list, const Allocator *) {
-  releasePrimeArray(list);
+  Array_reset(list, nullptr);
 }

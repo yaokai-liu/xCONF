@@ -28,12 +28,6 @@
 #include "context.h"
 #include "generated/xCONF/action-table.gen.h"
 
-enum XCONF_CONTEXT_ARRAY_ID {
-  XCONF_KEY_ARRAY = 1,
-  XCONF_TEXT_ARRAY = 1,
-  XCONF_VALUE_ARRAY = 1,
-};
-
 XCONFContext *XCONFContext_new(const Allocator *allocator) {
   XCONFContext *context = allocator->calloc(1, sizeof(XCONFContext));
 
@@ -79,23 +73,36 @@ void XCONFContext_state_action(XCONFContext *context, uint32_t state, Token *, c
     case XCONF_state_LEFT_BRACKET:
     case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_BRACKET:
     case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_LEFT_BRACKET: {
-      Stack_push(context->obj_stack, &context->object, sizeof(Object *));
-      context->object = context->allocator->calloc(1, sizeof(Object));
+      XCONFContext_enter(context, context->allocator->calloc(1, sizeof(Object)));
       break;
     }
     case XCONF_state_Object:
     case XCONF_state_LEFT_BRACKET_Path_ASSIGN_Object:
     case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_Object: {
-      Stack_pop(context->obj_stack, &context->object, sizeof(Object *));
+      XCONFContext_exit(context);
       break;
     }
     default:{}
   }
 }
 
-inline REFER(char_t) XCONFContent_new_text_content(XCONFContext *context, const char_t *text_content, uint32_t size) {
+inline REFER(char_t) XCONFContext_new_text_content(XCONFContext *context, const char_t *text_content, uint32_t size) {
   Array_append(context->text_array, "\0", 1);
   REFER(char_t) v_content = Array_last_virt(context->text_array) + 1;
   Array_append(context->text_array, text_content, size);
   return v_content;
+}
+
+inline void XCONFContext_enter(XCONFContext *context, Object *object) {
+  Stack_push(context->obj_stack, &context->object, sizeof(Object *));
+  context->object = object;
+}
+
+inline void XCONFContext_exit(XCONFContext *context) {
+  Stack_pop(context->obj_stack, &context->object, sizeof(Object *));
+}
+
+void XCONFContext_clear(XCONFContext *context) {
+  Stack_clear(context->obj_stack);
+  context->object = nullptr;
 }

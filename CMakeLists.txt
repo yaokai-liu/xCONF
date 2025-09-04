@@ -56,8 +56,8 @@ add_library(${TARGET_PREFIX}compose STATIC ${XCONF_COMPOSE_SRC})
 target_link_libraries(${TARGET_PREFIX}compose PRIVATE ${TARGET_PREFIX}grammar)
 target_include_directories(${TARGET_PREFIX}compose PRIVATE grammar)
 
-aux_source_directory(driver XCONF_DRIVER_SRC)
-add_library(xCONF STATIC ${XCONF_DRIVER_SRC})
+aux_source_directory(interface XCONF_INTERFACE_SRC)
+add_library(xCONF STATIC ${XCONF_INTERFACE_SRC})
 target_link_libraries(xCONF PRIVATE ${TARGET_PREFIX}grammar ${TARGET_PREFIX}compose)
 target_include_directories(xCONF PRIVATE grammar compose)
 

@@ -1,6 +1,6 @@
 /* License
  *
- * xCONF - C Library to Parse xCONF to C
+ * ${PROJECT_DESCRIPTION}
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,14 +18,21 @@
  *
  *
  * Project Name: xCONF
- * Module Name: driver
- * Filename: driver.h
+ * Module Name: grammar/Path
+ * Filename: parse.h
  * Creator: Yaokai Liu
- * Create Date: 2025-06-11
+ * Create Date: 2025-09-04
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XCONF_DRIVER_DRIVER_H
-#define XCONF_DRIVER_DRIVER_H
+#ifndef XCONF_GRAMMAR_PATH_PARSE_H
+#define XCONF_GRAMMAR_PATH_PARSE_H
 
-#endif //XCONF_DRIVER_DRIVER_H
+#include "tokenize/tokenizer.h"
+#include "xCONF/context.h"
+#include "xCONF/target.h"
+
+Path *parsePath(XCONFTokenizer *tokenizer, XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator);
+
+
+#endif //XCONF_GRAMMAR_PATH_PARSE_H

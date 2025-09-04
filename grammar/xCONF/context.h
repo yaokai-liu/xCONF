@@ -35,6 +35,13 @@
 #include "stack.h"
 #include "error_info.h"
 
+enum XCONF_CONTEXT_ARRAY_ID {
+  XCONF_KEY_ARRAY = 1,
+  XCONF_TEXT_ARRAY = 2,
+  XCONF_VALUE_ARRAY = 3,
+  XCONF_REFER_VALUE_ARRAY = 4,
+};
+
 typedef struct XCONFContext {
   const Allocator *allocator;
   Trie    *key_trie;      // Trie<char_t, REFER(char_t)>
@@ -50,7 +57,11 @@ void XCONFContext_destroy(XCONFContext *context);
 
 void XCONFContext_state_action(XCONFContext *context, uint32_t state, Token *, const Allocator *allocator);
 
-REFER(char_t) XCONFContent_new_text_content(XCONFContext *context, const char_t *text_content, uint32_t size);
+void XCONFContext_enter(XCONFContext *context, Object *object);
+void XCONFContext_exit(XCONFContext *context);
+void XCONFContext_clear(XCONFContext *context);
+
+REFER(char_t) XCONFContext_new_text_content(XCONFContext *context, const char_t *text_content, uint32_t size);
 
 #define XCONFContent_add_text_content(context, text_content, size) \
                          Array_append((context)->text_array, (text_content), (size))
