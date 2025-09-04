@@ -1,6 +1,6 @@
 /* License
  *
- * xCONF - C Library to Parse xCONF to C
+ * xCONF - A Configuration Language and Its Parser
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -40,7 +40,7 @@ static Object *failed_to_produce(Stack *state_stack, Stack *token_stack,
 static Object *clean_parse_stack(Stack *state_stack, Stack *token_stack, const Allocator *allocator);
 
 Object *parse(XCONFTokenizer *tokenizer, XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
-  Token token = {};
+  Token token = {}, result = {};
   Token args[MAX_ARGC] = {};
   Stack *state_stack = Stack_new(allocator);
   Stack *token_stack = Stack_new(allocator);
@@ -67,23 +67,23 @@ Object *parse(XCONFTokenizer *tokenizer, XCONFContext *context, ErrInfo *errInfo
       Stack_pop(state_stack, nullptr, act->count * sizeof(uint32_t));
       Stack_top(state_stack, (uint32_t *) &state, sizeof(uint32_t));
       fn_xconf_reduce *func = XCONF_PRODUCTS[act->offset];
-      token.type = act->type;
-      token.start.offset = args[0].start.offset;
-      token.start.lineno = args[0].start.lineno;
-      token.start.column = args[0].start.column;
-      token.end.offset = args[act->count - 1].end.offset;
-      token.end.lineno = args[act->count - 1].end.lineno;
-      token.end.column = args[act->count - 1].end.column;
-      token.length = token.end.offset - token.start.offset;
-      token.value = func(args, context, errInfo, allocator);
-      if (!token.value) {
+      result.type = act->type;
+      result.start.offset = args[0].start.offset;
+      result.start.lineno = args[0].start.lineno;
+      result.start.column = args[0].start.column;
+      result.end.offset = args[act->count - 1].end.offset;
+      result.end.lineno = args[act->count - 1].end.lineno;
+      result.end.column = args[act->count - 1].end.column;
+      result.length = result.end.offset - result.start.offset;
+      result.value = func(args, context, errInfo, allocator);
+      if (!result.value) {
         return failed_to_produce(state_stack, token_stack, args, act->count, allocator);
       }
       state = parseJumpState(state, act->type);
       if (state == XCONF_BAD_STATE) {
         return failed_to_get_next_state(state_stack, token_stack, &token, allocator);
       }
-      Stack_push(token_stack, &token, sizeof(Token));
+      Stack_push(token_stack, &result, sizeof(Token));
       Stack_push(state_stack, &state, sizeof(uint32_t));
       XCONFContext_state_action(context, state, &token, allocator);
       if (act->offset == XCONF_RULE_Object_EXT) { break; }
@@ -95,7 +95,7 @@ Object *parse(XCONFTokenizer *tokenizer, XCONFContext *context, ErrInfo *errInfo
   Stack_clear(state_stack);
   allocator->free(token_stack);
   allocator->free(state_stack);
-  return token.value;
+  return result.value;
 }
 
 

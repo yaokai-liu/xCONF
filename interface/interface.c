@@ -1,6 +1,6 @@
 /* License
  *
- * xCONF - C Library to Parse xCONF to C
+ * xCONF - A Configuration Language and Its Parser
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -41,17 +41,19 @@ static struct XCONFInstance {
   XCONFTokenizer *tokenizer;
   XCONFContext *context;
   ErrInfo errInfo;
-} INSTANCE = {.context = nullptr};
+} INSTANCE = {.allocator = nullptr, .context = nullptr, .tokenizer = nullptr};
 
 uint32_t XCONF_init() {
+  INSTANCE.allocator = &STDAllocator;
+  INSTANCE.context = XCONFContext_new(INSTANCE.allocator);
   INSTANCE.tokenizer = XCONFTokenizer_new(nullptr, INSTANCE.context->key_array,
-                                          INSTANCE.context->key_trie, INSTANCE.context->allocator);
-  INSTANCE.context = XCONFContext_new(&STDAllocator);
+                                          INSTANCE.context->key_trie, INSTANCE.allocator);
   return XCONF_SUCCESS;
 }
-uint32_t XCONF_finish(const XCONFInstance *instance) {
-  XCONFContext_destroy(instance->context);
-  XCONFTokenizer_destroy(instance->tokenizer);
+
+uint32_t XCONF_finish(void) {
+  XCONFContext_destroy(INSTANCE.context);
+  XCONFTokenizer_destroy(INSTANCE.tokenizer);
   return XCONF_SUCCESS;
 }
 
@@ -268,13 +270,13 @@ uint32_t XCONF_get_object(XCONF *__conf, const char *__path, XCONFObject **objec
   return XCONF_SUCCESS;
 }
 
-uint32_t XCONF_get_text(XCONF *__conf, const char *__path, const char **text, uint32_t *length) {
+uint32_t XCONF_get_text(XCONF *__conf, const char *__path, const char **text, uint32_t *size) {
   Value *value = nullptr;
   uint32_t result = XCONF_get_path_value(__conf, __path, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }
   *text = value->val.TEXT->content;
-  *length = value->val.TEXT->size;
+  *size = value->val.TEXT->size;
   return XCONF_SUCCESS;
 }
 
@@ -403,13 +405,13 @@ uint32_t XCONFList_get_object(XCONFList *__list, uint32_t index, XCONFObject **o
   return XCONF_SUCCESS;
 }
 
-uint32_t XCONFList_get_text(XCONFList *__list, uint32_t index, const char **text, uint32_t *length) {
+uint32_t XCONFList_get_text(XCONFList *__list, uint32_t index, const char **text, uint32_t *size) {
   Value *value = nullptr;
   uint32_t result = XCONFList_get_value(__list, index, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }
   *text = value->val.TEXT->content;
-  *length = value->val.TEXT->size;
+  *size = value->val.TEXT->size;
   return XCONF_SUCCESS;
 }
 
@@ -432,8 +434,8 @@ static uint32_t XCONFList_get_value(XCONFList *__list, uint32_t index, Value **v
 
 uint32_t XCONF_keys(XCONF *__conf, const char **keys, uint32_t *count) {
   *count = Array_length(__conf->keys);
+  if (!keys) { return XCONF_SUCCESS; }
   REFER(char) *v_keys = Array_first_real(__conf->keys);
-  *keys = INSTANCE.allocator->malloc(*count * sizeof(const char *));
   for (uint32_t i = 0; i < *count; i++) {
     keys[i] = Array_virt2real(INSTANCE.context->key_array, v_keys[i]);
   }

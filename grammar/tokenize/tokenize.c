@@ -310,12 +310,12 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
     exponent += int_eff_length;
     exponent -= frac_eff_length;
   }
-  if ((*pText == 'l') || (*pText == 'L')) { size *= 2; }
-  if ((*pText == 'l') || (*pText == 'L')) { size *= 2; }
+  if ((*pText == 'l') || (*pText == 'L')) { size *= 2; pText++; }
+  if ((*pText == 'l') || (*pText == 'L')) { size *= 2; pText++; }
   size = min(size, 16);
   if ((*pText == 'u') || (*pText == 'U')) {
     if (type == XCONF_VAL_CAT_FLOAT) { return 0; }
-    else { type = XCONF_VAL_CAT_UINT; }
+    type = XCONF_VAL_CAT_UINT; pText++;
   }
   if (isKeyChar(pText) || *pText == '.') { return 0; }
 
@@ -398,7 +398,7 @@ uint32_t t_KEY(const char_t * const input, Terminal * const result, const Alloca
   uint32_t length = t_NUMBER(pText + (text_off), result,          \
                              negative, (adic_type), allocator);   \
   result->length += pText - input;                                \
-  return length ? result->length : 0;                             \
+  return length ? result->length + text_off : 0;                  \
 } while(false)
 
 /*
@@ -485,7 +485,7 @@ fn_try_keyword_val(NULL, NULL, 0)
 constexpr uint32_t TERMINAL_TYPE_LITERALS[] = {
   XCONF_TOKEN_DOT,
   XCONF_TOKEN_COMMA,
-  XCONF_TOKEN_ASSIGN,
+  XCONF_TOKEN_COLON,
   XCONF_TOKEN_ASSIGN,
 
   XCONF_TOKEN_LEFT_BRACKET,
@@ -514,10 +514,6 @@ uint32_t single_tokenize(const char_t * const input, Terminal * const result,
     return 0;
   }
   uint32_t length = 0;
-  if (*input == '"' || *input == '\'') {
-//    length = tokenize_text(input, result, allocator);
-    return length;
-  }
   if (isDecDigital(input) || (*input == '+') || *input == '-') {
     length = tokenize_number(input, result, allocator);
     return length;

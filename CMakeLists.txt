@@ -63,3 +63,7 @@ target_include_directories(xCONF PRIVATE grammar compose)
 
 add_executable(debug test/debug.c ${XCONF_UTILS_SRC})
 target_include_directories(debug PRIVATE utils)
+
+AUX_SOURCE_DIRECTORY(test/testcases XCONF_TESTCASE_SRC)
+add_executable(${TARGET_PREFIX}test test/test.c ${XCONF_TESTCASE_SRC})
+target_link_libraries(${TARGET_PREFIX}test PRIVATE xCONF libcheck)

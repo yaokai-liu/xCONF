@@ -84,6 +84,16 @@ XCONFTokenizer_next(XCONFTokenizer *tokenizer, Token *token, ErrInfo *errInfo, c
     errInfo->code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
     return errInfo->code;
   }
+  if (terminal.type == XCONF_TOKEN_KEY) {
+    REFER(char_t) v_key = Trie_get(tokenizer->ident_trie, terminal.value);
+    if (!v_key) {
+      v_key = Array_last_virt(tokenizer->ident_array) + 1;
+      Array_append(tokenizer->ident_array, terminal.value, terminal.length + 1);
+      Trie_set(tokenizer->ident_trie, terminal.value, v_key);
+    }
+    allocator->free(terminal.value);
+    terminal.value = v_key;
+  }
   terminal2Token(&terminal, token);
   tokenizer->offset += length;
   tokenizer->column += length;

@@ -1,6 +1,6 @@
 /* License
  *
- * ${PROJECT_DESCRIPTION}
+ * xCONF - A Configuration Language and Its Parser
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,37 +31,54 @@
 #include "generated/xCONF/action-table.gen.h"
 #include "generated/xCONF/rules.gen.h"
 
+const struct grammar_action EXTEND_PATH_ACT[] = {
+{ .action = XCONF_action_reduce, .type = XCONF_TOKEN_Path, .offset = XCONF_RULE_Path_0, .count = 3 },
+{ .action = XCONF_action_reduce, .type = XCONF_TOKEN_Path, .offset = XCONF_RULE_Path_1, .count = 2 },
+{ .action = XCONF_action_reduce, .type = XCONF_TOKEN_Path, .offset = XCONF_RULE_Path_2, .count = 1 }
+};
 
 Path *parsePath(XCONFTokenizer *tokenizer, XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
-  Token token = {};
+  Token token = {}, result = {};
   uint32_t argc = 0;
   Token args[4] = {};
+  bool end_of_path = false;
   uint32_t state = XCONF_state_LEFT_BRACKET_LEFT_SQUARE_BRACKET;
 
   uint32_t status = XCONFTokenizer_next(tokenizer, &token, errInfo, allocator);
   if (status != XCONF_SUCCESS) { return nullptr; }
   while (true) {
-    if (token.type == XCONF_TOKEN_TERMINATOR) { return args[0].value; }
-    if (token.type != XCONF_TOKEN_DOT && token.type != XCONF_TOKEN_KEY) { return nullptr; }
-    const struct grammar_action *act = getParseAction(state, token.type);
-    if (!act) { return nullptr; }
+    const struct grammar_action *act = nullptr;
+    if (token.type == XCONF_TOKEN_TERMINATOR) {
+      end_of_path = true;
+      switch (state) {
+        case XCONF_state_LEFT_BRACKET_LEFT_SQUARE_BRACKET_Path_DOT_KEY: act = &EXTEND_PATH_ACT[0]; break;
+        case XCONF_state_LEFT_BRACKET_LEFT_SQUARE_BRACKET_DOT_KEY:      act = &EXTEND_PATH_ACT[1]; break;
+        case XCONF_state_LEFT_BRACKET_LEFT_SQUARE_BRACKET_KEY:          act = &EXTEND_PATH_ACT[2]; break;
+        default: { return nullptr; }
+      }
+    } else {
+      if (token.type != XCONF_TOKEN_DOT && token.type != XCONF_TOKEN_KEY) { return nullptr; }
+      act = getParseAction(state, token.type);
+      if (!act) { return nullptr; }
+    }
     if (act->action == XCONF_action_stack) {
       state = act->offset;
-      args[argc] = token;
+      args[argc++] = token;
       status = XCONFTokenizer_next(tokenizer, &token, errInfo, allocator);
       if (status != XCONF_SUCCESS) { return nullptr; }
       XCONFContext_state_action(context, state, &token, allocator);
     } else if (act->action == XCONF_action_reduce) {
       fn_xconf_reduce *func = XCONF_PRODUCTS[act->offset];
-      token.type = act->type;
-      token.value = func(args, context, errInfo, allocator);
-      if (!token.value) { return nullptr; }
+      result.type = act->type;
+      result.value = func(args, context, errInfo, allocator);
+      if (!result.value) { return nullptr; }
       state = parseJumpState(XCONF_state_LEFT_BRACKET_LEFT_SQUARE_BRACKET, act->type);
       if (state == XCONF_BAD_STATE) { return nullptr; }
       argc -= act->count;
-      args[argc] = token;
+      args[argc] = result;
     } else {
       // never be touched
     }
+    if (end_of_path) { return result.value; }
   }
 }

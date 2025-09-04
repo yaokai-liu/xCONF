@@ -1,6 +1,6 @@
 /* License
  *
- * xCONF - C Library to Parse xCONF to C
+ * xCONF - A Configuration Language and Its Parser
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,6 +39,9 @@ XCONFContext *XCONFContext_new(const Allocator *allocator) {
   context->obj_stack = Stack_new(allocator);
   context->object = nullptr;
 
+  Array_append(context->text_array, "", 1);
+  Array_append(context->key_array, "", 1);
+
   return context;
 }
 
@@ -73,7 +76,7 @@ void XCONFContext_state_action(XCONFContext *context, uint32_t state, Token *, c
     case XCONF_state_LEFT_BRACKET:
     case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_BRACKET:
     case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_LEFT_BRACKET: {
-      XCONFContext_enter(context, context->allocator->calloc(1, sizeof(Object)));
+      XCONFContext_enter(context, Object_new(context->allocator));
       break;
     }
     case XCONF_state_Object:

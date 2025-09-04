@@ -18,21 +18,18 @@
  *
  *
  * Project Name: xCONF
- * Module Name: grammar/Path
- * Filename: parse.h
+ * Module Name: test/testcases
+ * Filename: testcases.h
  * Creator: Yaokai Liu
  * Create Date: 2025-09-04
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XCONF_GRAMMAR_PATH_PARSE_H
-#define XCONF_GRAMMAR_PATH_PARSE_H
+#ifndef XCONF_TESTCASES_H
+#define XCONF_TESTCASES_H
 
-#include "tokenize/tokenizer.h"
-#include "xCONF/context.h"
-#include "xCONF/target.h"
+#include <check.h>
 
-Path *parsePath(XCONFTokenizer *tokenizer, XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator);
+Suite *number_suite();
 
-
-#endif //XCONF_GRAMMAR_PATH_PARSE_H
+#endif //XCONF_TESTCASES_H

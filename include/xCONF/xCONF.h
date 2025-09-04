@@ -1,6 +1,6 @@
 /* License
  *
- * xCONF - C Library to Parse xCONF to C
+ * xCONF - A Configuration Language and Its Parser
  * Copyright (C) 2025 Yaokai Liu
  *
  * This program is free software: you can redistribute it and/or modify
@@ -85,7 +85,7 @@ typedef struct XCONFInstance  XCONFInstance;
 typedef struct XCONFObject    XCONFObject, XCONF;
 
 uint32_t XCONF_init();
-uint32_t XCONF_finish(const XCONFInstance *instance);
+uint32_t XCONF_finish(void);
 
 /**
  * @description load configurations from a file
@@ -188,7 +188,7 @@ uint32_t XCONF_get_int256(XCONF *__conf, const char *__path, int256_t *value);
 
 uint32_t XCONF_get_list(XCONF *__conf, const char *__path, XCONFList **list);
 uint32_t XCONF_get_object(XCONF *__conf, const char *__path, XCONFObject **object);
-uint32_t XCONF_get_text(XCONF *__conf, const char *__path, const char **text, uint32_t *length);
+uint32_t XCONF_get_text(XCONF *__conf, const char *__path, const char **text, uint32_t *size);
 
 uint32_t XCONFList_set_float32(XCONFList *__list, uint32_t index, float32_t value);
 uint32_t XCONFList_set_float64(XCONFList *__list, uint32_t index, float64_t value);
@@ -228,7 +228,7 @@ uint32_t XCONFList_get_int256(XCONFList *__list, uint32_t index, int256_t *value
 
 uint32_t XCONFList_get_list(XCONFList *__list, uint32_t index, XCONFList **list);
 uint32_t XCONFList_get_object(XCONFList *__list, uint32_t index, XCONFObject **object);
-uint32_t XCONFList_get_text(XCONFList *__list, uint32_t index, const char **text, uint32_t *length);
+uint32_t XCONFList_get_text(XCONFList *__list, uint32_t index, const char **text, uint32_t *size);
 
 uint32_t XCONF_keys(XCONF *__conf, const char **keys, uint32_t *count);
 uint32_t XCONFList_count(XCONFList *__list, uint32_t *count);

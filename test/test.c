@@ -18,21 +18,23 @@
  *
  *
  * Project Name: xCONF
- * Module Name: grammar/Path
- * Filename: parse.h
+ * Module Name: test
+ * Filename: test.c
  * Creator: Yaokai Liu
  * Create Date: 2025-09-04
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XCONF_GRAMMAR_PATH_PARSE_H
-#define XCONF_GRAMMAR_PATH_PARSE_H
+#include "testcases/testcases.h"
+#include <check.h>
 
-#include "tokenize/tokenizer.h"
-#include "xCONF/context.h"
-#include "xCONF/target.h"
+int main() {
+    SRunner *srunner = srunner_create(nullptr);
+    srunner_add_suite(srunner, number_suite());
+    srunner_set_fork_status(srunner, CK_NOFORK);
+    srunner_run_all(srunner, CK_NORMAL);
+    int n = srunner_ntests_failed(srunner);
+    srunner_free(srunner);
 
-Path *parsePath(XCONFTokenizer *tokenizer, XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator);
-
-
-#endif //XCONF_GRAMMAR_PATH_PARSE_H
+    return n ? -1 : 0;
+}
