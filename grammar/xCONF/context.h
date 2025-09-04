@@ -28,7 +28,6 @@
 #ifndef XCONF_GRAMMAR_XCONF_CONTEXT_H
 #define XCONF_GRAMMAR_XCONF_CONTEXT_H
 
-#include "xCONF/xCONF.h"
 #include "array.h"
 #include "trie.h"
 #include "target.h"
@@ -39,7 +38,8 @@ enum XCONF_CONTEXT_ARRAY_ID {
   XCONF_KEY_ARRAY = 1,
   XCONF_TEXT_ARRAY = 2,
   XCONF_VALUE_ARRAY = 3,
-  XCONF_REFER_VALUE_ARRAY = 4,
+  XCONF_REFER_KEY_ARRAY = 4,
+  XCONF_REFER_VALUE_ARRAY = 5,
 };
 
 typedef struct XCONFContext {

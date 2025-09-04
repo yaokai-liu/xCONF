@@ -26,7 +26,14 @@
  **/
 
 #include "target.h"
+#include "context.h"
 
+Object *Object_new(const Allocator *allocator) {
+  Object *object = allocator->calloc(1, sizeof(Object));
+  object->keys = Array_new(sizeof(REFER(char_t)), XCONF_REFER_KEY_ARRAY, allocator);
+  object->mapping = AVLTree_new(allocator, nullptr);
+  return object;
+}
 
 void releaseValue(Value *val, const Allocator *allocator) {
   switch (val->type) {

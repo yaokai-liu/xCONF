@@ -109,7 +109,7 @@ typedef Text Texts;
 // Because every `Path` is only mapping to a `Value`.
 typedef Value Path;
 
-Object *Object_new();
+Object *Object_new(const Allocator *allocator);
 
 void releaseValue(Value *, const Allocator *);
 void releasePair(Pair *, const Allocator *);

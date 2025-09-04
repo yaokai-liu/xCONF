@@ -116,13 +116,13 @@ Pairs * XCONF_Pairs_1 (Token [], XCONFContext *, ErrInfo *, const Allocator *) {
   return (Pairs *) XCONF_TOKEN_Pairs;
 }
 
-Path * XCONF_Path_0 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
+Path * XCONF_Path_0 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
   Path *path = args[0].value;
   REFER(char_t) key = args[2].value;
 
   Value *obj = Array_virt2real(context->value_array, path);
   if (obj->type == XCONF_VAL_UNINITIALIZED) {
-    obj->val.OBJECT = Object_new();
+    obj->val.OBJECT = Object_new(allocator);
     obj->type = XCONF_VAL_OBJECT;
     obj->size = 0;
   } else if (obj->type != XCONF_VAL_OBJECT) {

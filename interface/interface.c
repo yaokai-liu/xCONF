@@ -119,9 +119,7 @@ uint32_t XCONF_create_object(XCONF *__conf, const char *__path, XCONFObject **ob
   if (value->type != XCONF_VAL_UNINITIALIZED) { return XCONF_ERROR_CREATING_EXISTED; }
 
 
-  value->val.OBJECT = INSTANCE.allocator->calloc(1, sizeof(Object));
-  value->val.OBJECT->keys = Array_new(sizeof(REFER(char_t)), XCONF_KEY_ARRAY, INSTANCE.allocator);
-  value->val.OBJECT->mapping = AVLTree_new(INSTANCE.allocator, nullptr);
+  value->val.OBJECT = Object_new(INSTANCE.allocator);
   value->type = XCONF_VAL_OBJECT;
   value->size = 0;
 
