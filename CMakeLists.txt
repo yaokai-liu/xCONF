@@ -14,7 +14,7 @@ else ()
 endif ()
 
 add_compile_options("-funsigned-char")
-add_compile_options("-O3" "-Os")
+#add_compile_options("-O3" "-Os")
 add_compile_options("-Wall" "-Wextra" "-Werror")
 if (WIN32)
     add_compile_options("-Wno-format")
@@ -45,11 +45,10 @@ endif ()
 
 include_directories(include)
 
-aux_source_directory(utils XCONF_UTILS_SRC)
-
 file(GLOB_RECURSE XCONF_GRAMMAR_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} grammar/*.c grammar/*.h)
 add_library(${TARGET_PREFIX}grammar STATIC ${XCONF_GRAMMAR_SRC} ${XCONF_UTILS_SRC})
-target_include_directories(${TARGET_PREFIX}grammar PRIVATE grammar utils)
+target_include_directories(${TARGET_PREFIX}grammar PRIVATE grammar)
+target_link_libraries(${TARGET_PREFIX}grammar PRIVATE m)
 
 aux_source_directory(compose XCONF_COMPOSE_SRC)
 add_library(${TARGET_PREFIX}compose STATIC ${XCONF_COMPOSE_SRC})
@@ -66,4 +65,7 @@ target_include_directories(debug PRIVATE utils)
 
 AUX_SOURCE_DIRECTORY(test/testcases XCONF_TESTCASE_SRC)
 add_executable(${TARGET_PREFIX}test test/test.c ${XCONF_TESTCASE_SRC})
-target_link_libraries(${TARGET_PREFIX}test PRIVATE xCONF libcheck)
+target_link_libraries(${TARGET_PREFIX}test PRIVATE xCONF check)
+
+add_executable(${TARGET_PREFIX}test-debug test/debug.c)
+target_link_libraries(${TARGET_PREFIX}test-debug PRIVATE xCONF)

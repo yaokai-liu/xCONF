@@ -299,17 +299,19 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
     type = XCONF_VAL_CAT_FLOAT; size = 4; pText ++;
     length = DIGITAL_FUNC_TOOLS[adic][FRAC_DIGITAL_FUNC](pText, &frac_eff_length, &integer);
     if (!length) { return 0; }
-    if (*pText == 'p' || *pText == 'P' || *pText == 'e' || *pText == 'E') {
-      pText ++;
-      exp_negative = (*pText == '-');
-      if (isSign(pText)) { pText++; }
-      length = DIGITAL_FUNC_TOOLS[adic][INT_DIGITAL_FUNC](pText, nullptr, &exponent);
-      if (!length) { return 0; }
-    }
-    exponent = exp_negative ? -exponent : exponent;
-    exponent += int_eff_length;
-    exponent -= frac_eff_length;
+    pText += length;
   }
+  if (*pText == 'p' || *pText == 'P' || *pText == 'e' || *pText == 'E') {
+    pText ++;
+    exp_negative = (*pText == '-');
+    if (isSign(pText)) { pText++; }
+    length = DIGITAL_FUNC_TOOLS[adic][INT_DIGITAL_FUNC](pText, nullptr, &exponent);
+    if (!length) { return 0; }
+    pText += length;
+  }
+  exponent = exp_negative ? -exponent : exponent;
+  exponent += int_eff_length;
+  exponent -= frac_eff_length;
   if ((*pText == 'l') || (*pText == 'L')) { size *= 2; pText++; }
   if ((*pText == 'l') || (*pText == 'L')) { size *= 2; pText++; }
   size = min(size, 16);
@@ -348,13 +350,13 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
     else if (size == 8) { value->val.U64 = integer; value->type = XCONF_VAL_U64; }
     else if (size == 16) { value->val.U128 = integer; value->type = XCONF_VAL_U128; }
     else { return 0; }
-  } else if (type == XCONF_VAL_CAT_INT) {
+  } else {
     if (negative) { integer = -integer; }
     if (size == 4) { value->val.I32 = integer; value->type = XCONF_VAL_I32; }
     else if (size == 8) { value->val.I64 = integer; value->type = XCONF_VAL_I64; }
     else if (size == 16) { value->val.I128 = integer; value->type = XCONF_VAL_I128; }
     else { return 0; }
-  } else { return 0; }
+  }
 
   result->type = XCONF_TOKEN_NUMBER;
   result->length = pText - input;
@@ -409,7 +411,7 @@ uint32_t t_KEY(const char_t * const input, Terminal * const result, const Alloca
  */
 uint32_t tokenize_number(const char_t * const input, Terminal * const result, const Allocator * const allocator) {
   const char_t *pText = input;
-  bool negative = ('-' == *pText);
+  const bool negative = ('-' == *pText);
   if (isSign(pText)) { pText++; }
   if ('0' == *pText) {
     switch (pText[1]) {
@@ -438,11 +440,12 @@ uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,
   const char_t *pText = input;
   while (*pText) {
     if (*pText == '\\') {
-      if (!*pText++) { return 0; } else { pText++; }
+      if (!*pText++) { return 0; }
+      pText++;
     }
     uint32_t length = strcmp_o(pText, succ);
     if (length == n_succ) { break; }
-    else if (!pText[length]) { return 0; }
+    if (!pText[length]) { return 0; }
     pText ++;
   }
 
@@ -454,8 +457,9 @@ uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,
   text->length = pText - input;
   text->content = allocator->malloc((text->length + 1) * sizeof(char_t));
   allocator->memcpy(text->content, input, text->length);
-  text->content[text->length] = '\0';
+  text->content[text->length] = '\0';\
   result->length = length;
+  result->value = text;
   return length;
 }
 

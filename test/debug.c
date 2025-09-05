@@ -27,6 +27,17 @@
 
 #include <stdio.h>
 #include <stdint.h>
+
+#include "xCONF/xCONF.h"
+
 int main () {
+  XCONF_init();
+
+  const char *string = "{afsad-olajfYNbl: 0x128940LLU, lfk1iouagdb_lfk70: 'doafui nqoaisdufhapdihfbado9ugbb 09ifndo98  0 8g o b itv v\n\b\v', "
+                       "[daoj] = [\"sdfasd\"], .daoj[1]: -012543655e22L}";
+  XCONF *conf = nullptr;
+  if (XCONF_parse(string, &conf) != XCONF_SUCCESS) { XCONF_finish(); return -1; }
+
+  XCONF_finish();
   return 0;
 }
