@@ -41,6 +41,7 @@ XCONFContext *XCONFContext_new(const Allocator *allocator) {
 
   Array_append(context->text_array, "", 1);
   Array_append(context->key_array, "", 1);
+  Array_append(context->value_array, &(Value){ .type = XCONF_VAL_UNINITIALIZED, .size = 0, .val.U256 = 0 }, 1);
 
   return context;
 }
@@ -72,16 +73,23 @@ void XCONFContext_destroy(XCONFContext *context) {
 }
 
 void XCONFContext_state_action(XCONFContext *context, uint32_t state, Token *, const Allocator *) {
+  if (context->path_action == XCONF_PATH_ACTION_ACCESS) { return; }
   switch (state) {
     case XCONF_state_LEFT_BRACKET:
+    // case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_BRACKET:
     case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_BRACKET:
-    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_LEFT_BRACKET: {
+    // case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
+    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
+    {
       XCONFContext_enter(context, Object_new(context->allocator));
       break;
     }
-    case XCONF_state_Object:
+    // case XCONF_state_Object:
+    // case XCONF_state_LEFT_BRACKET_Path_COLON_Object:
     case XCONF_state_LEFT_BRACKET_Path_ASSIGN_Object:
-    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_Object: {
+    // case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_Object:
+    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_Object:
+    {
       XCONFContext_exit(context);
       break;
     }

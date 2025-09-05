@@ -374,10 +374,10 @@ uint32_t t_KEY(const char_t * const input, Terminal * const result, const Alloca
     if (isDecDigital(pText) || startswithLetter(pText)) { pText++; continue; }
     // "_-" and "-_" are forbidden
     if (*pText == '_') {
-      if (pText[1] == '-') { result->length = pText - input; return 0; } else { pText++; }
+      if (pText[1] == '-') { result->length = pText - input; return 0; } else { pText++; continue; }
     }
     if (*pText == '-') {
-      if (pText[1] == '_') { result->length = pText - input; return 0; } else { pText++; }
+      if (pText[1] == '_') { result->length = pText - input; return 0; } else { pText++; continue; }
     }
     break;
   }
@@ -525,8 +525,8 @@ uint32_t single_tokenize(const char_t * const input, Terminal * const result,
     case 'F': { return try_keyword_FALSE(input + 1, 1, result, allocator); }
     case 't': { return try_keyword_true(input + 1, 1, result, allocator); }
     case 'T': { return try_keyword_TRUE(input + 1, 1, result, allocator); }
-    case 'n': { return try_keyword_NULL(input + 1, 1, result, allocator); }
-    case 'N': { return try_keyword_null(input + 1, 1, result, allocator); }
+    case 'n': { return try_keyword_null(input + 1, 1, result, allocator); }
+    case 'N': { return try_keyword_NULL(input + 1, 1, result, allocator); }
     case '"': { return tokenize_text(input + 1, 1, "\"", 1, result, allocator); }
     case '\'': { return tokenize_text(input + 1, 1, "\'", 1, result, allocator); }
   }

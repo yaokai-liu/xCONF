@@ -26,15 +26,17 @@
  **/
 
 #include "testcases/testcases.h"
+#include "xCONF/xCONF.h"
 #include <check.h>
 
 int main() {
+    XCONF_init();
     SRunner *srunner = srunner_create(nullptr);
-    srunner_add_suite(srunner, number_suite());
+    srunner_add_suite(srunner, parse_suite());
     srunner_set_fork_status(srunner, CK_NOFORK);
     srunner_run_all(srunner, CK_NORMAL);
     int n = srunner_ntests_failed(srunner);
     srunner_free(srunner);
-
+    XCONF_finish();
     return n ? -1 : 0;
 }

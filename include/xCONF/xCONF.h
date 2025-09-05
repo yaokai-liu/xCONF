@@ -58,11 +58,13 @@ enum XCONF_ERROR_CODE_ENUM: uint32_t {
 
   XCONF_ERROR_NO_SUCH_KEY,
   XCONF_ERROR_CONFLICT_KEY,
+  XCONF_ERROR_FIELD_UNDEFINED,
   XCONF_ERROR_INDEX_OUT_OF_RANGE,
   XCONF_ERROR_UNRECOGNIZED_SYMBOL,
   XCONF_ERROR_UNEXPECTED_EOF,
   XCONF_ERROR_NO_SUCH_FILE,
 
+  XCONF_ERROR_INVALID_PATH_ACTION,
   XCONF_ERROR_CREATING_EXISTED,
   XCONF_ERROR_OVER_BUFFER_SIZE,
   XCONF_ERROR_DUMP_UNSUPPORTED_VALUE,
@@ -85,6 +87,7 @@ typedef struct XCONFInstance  XCONFInstance;
 typedef struct XCONFObject    XCONFObject, XCONF;
 
 uint32_t XCONF_init();
+uint32_t XCONF_reset();
 uint32_t XCONF_finish(void);
 
 /**
@@ -165,9 +168,11 @@ uint32_t XCONF_set_int64(XCONF *__conf, const char *__path, int64_t value);
 uint32_t XCONF_set_int128(XCONF *__conf, const char *__path, int128_t value);
 uint32_t XCONF_set_int256(XCONF *__conf, const char *__path, int256_t value);
 
+uint32_t XCONF_set_null(XCONF *__conf, const char *__path);
+uint32_t XCONF_set_bool(XCONF *__conf, const char *__path, bool value);
+uint32_t XCONF_set_list(XCONF *__conf, const char *__path, XCONFList *list);
 uint32_t XCONF_set_text(XCONF *__conf, const char *__path, const char *text);
 uint32_t XCONF_set_object(XCONF *__conf, const char *__path, XCONFObject *object);
-uint32_t XCONF_set_list(XCONF *__conf, const char *__path, XCONFList *list);
 
 uint32_t XCONF_getValueType(XCONF *__conf, const char *__path, enum XCONF_VALUE_TYPE_ENUM *type);
 
@@ -186,6 +191,7 @@ uint32_t XCONF_get_int64(XCONF *__conf, const char *__path, int64_t *value);
 uint32_t XCONF_get_int128(XCONF *__conf, const char *__path, int128_t *value);
 uint32_t XCONF_get_int256(XCONF *__conf, const char *__path, int256_t *value);
 
+uint32_t XCONF_get_bool(XCONF *__conf, const char *__path, bool *value);
 uint32_t XCONF_get_list(XCONF *__conf, const char *__path, XCONFList **list);
 uint32_t XCONF_get_object(XCONF *__conf, const char *__path, XCONFObject **object);
 uint32_t XCONF_get_text(XCONF *__conf, const char *__path, const char **text, uint32_t *size);

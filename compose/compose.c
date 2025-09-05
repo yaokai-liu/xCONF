@@ -115,17 +115,16 @@ uint32_t writeList(FILE *file, List *list, uint32_t indent, XCONFContext *contex
 
 uint32_t writeObject(FILE *file, Object *object, uint32_t indent, XCONFContext *context) {
   fprintf(file, "{\n");
-  uint32_t n_keys = Array_length(object->keys);
-  REFER(Value) *keys = Array_first_real(object->keys);
-  for (uint32_t i = 0; i < n_keys; i++) {
-    char *key = Array_virt2real(context->key_array, keys[i]);
+  uint32_t n_pairs = Array_length(object->pairs);
+  Pair *pairs = Array_first_real(object->pairs);
+  for (uint32_t i = 0; i < n_pairs; i++) {
+    char *key = Array_virt2real(context->key_array, pairs[i].key);
     for (uint32_t j = 0; j < indent + 1; j++) { fprintf(file, "  "); }
     fprintf(file, "%s = ", key);
-    Value *v_val = AVLTree_get(object->mapping, (uint64_t) keys[i]);
-    Value *val = Array_virt2real(context->value_array, v_val);
+    Value *val = Array_virt2real(context->value_array, pairs[i].value);
     uint32_t result = writeValue(file, val, indent + 1, context);
     if (result != XCONF_SUCCESS) { return result; }
-    if (i < n_keys - 1) { fprintf(file, ",\n"); }
+    if (i < n_pairs - 1) { fprintf(file, ",\n"); }
   }
   for (uint32_t j = 0; j < indent; j++) { fprintf(file, "  "); }
   fprintf(file, "}\n");

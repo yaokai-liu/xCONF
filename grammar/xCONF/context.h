@@ -34,11 +34,17 @@
 #include "stack.h"
 #include "error_info.h"
 
+enum XCONF_PATH_ACTION_TYPE {
+  XCONF_PATH_ACTION_UNSET,
+  XCONF_PATH_ACTION_BUILD,
+  XCONF_PATH_ACTION_ACCESS,
+};
+
 enum XCONF_CONTEXT_ARRAY_ID {
   XCONF_KEY_ARRAY = 1,
   XCONF_TEXT_ARRAY = 2,
   XCONF_VALUE_ARRAY = 3,
-  XCONF_REFER_KEY_ARRAY = 4,
+  XCONF_PAIR_ARRAY = 4,
   XCONF_REFER_VALUE_ARRAY = 5,
 };
 
@@ -50,6 +56,7 @@ typedef struct XCONFContext {
   Array   *value_array;   // Array<Value>
   Stack   *obj_stack;     // Stack<Object>
   Object  *object;
+  uint32_t path_action;
 } XCONFContext;
 
 XCONFContext *XCONFContext_new(const Allocator *allocator);

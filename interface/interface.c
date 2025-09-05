@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+#include <stddef.h>
 
 static struct XCONFInstance {
   const Allocator *allocator;
@@ -75,9 +76,17 @@ uint32_t XCONF_load(const char *__filepath, XCONF **__conf) {
   return result;
 }
 
+uint32_t XCONF_reset() {
+  INSTANCE.context->object = nullptr;
+  XCONFContext_clear(INSTANCE.context);
+  XCONFTokenizer_setSrc(INSTANCE.tokenizer, nullptr);
+  return XCONF_SUCCESS;
+}
+
 uint32_t XCONF_parse(const char *__string, XCONF **__conf) {
   XCONFContext_clear(INSTANCE.context);
   XCONFTokenizer_setSrc(INSTANCE.tokenizer, __string);
+  INSTANCE.context->path_action = XCONF_PATH_ACTION_BUILD;
   XCONF *conf = parse(INSTANCE.tokenizer, INSTANCE.context, &INSTANCE.errInfo, INSTANCE.allocator);
   if (!conf) { return INSTANCE.errInfo.code; }
   *__conf = conf;
@@ -104,22 +113,18 @@ uint32_t XCONF_compose(XCONF *__conf, char *buffer, uint32_t buffer_size) {
 }
 
 uint32_t XCONF_create_conf(XCONF **__conf) {
-  Object *object = INSTANCE.allocator->calloc(1, sizeof(Object));
-  object->keys = Array_new(sizeof(REFER(char_t)), XCONF_KEY_ARRAY, INSTANCE.allocator);
-  object->mapping = AVLTree_new(INSTANCE.allocator, nullptr);
-  *__conf = object;
+  *__conf = Object_new(INSTANCE.allocator);
   return XCONF_SUCCESS;
 }
 
-static uint32_t XCONF_get_path_value(XCONF *__conf, const char *__path, Value **value);
+static uint32_t XCONF_get_path_value(XCONF *__conf, const char *__path, uint32_t action, Value **value);
 static uint32_t XCONFList_get_value(XCONFList *__list, uint32_t index, Value **value);
 
 uint32_t XCONF_create_object(XCONF *__conf, const char *__path, XCONFObject **object) {
   Value *value = nullptr;
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_BUILD, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { return XCONF_ERROR_CREATING_EXISTED; }
-
 
   value->val.OBJECT = Object_new(INSTANCE.allocator);
   value->type = XCONF_VAL_OBJECT;
@@ -132,7 +137,7 @@ uint32_t XCONF_create_object(XCONF *__conf, const char *__path, XCONFObject **ob
 
 uint32_t XCONF_create_list(XCONF *__conf, const char *__path, XCONFList **list) {
   Value *value = nullptr;
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);
+  const uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_BUILD, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { return XCONF_ERROR_CREATING_EXISTED; }
 
@@ -146,19 +151,33 @@ uint32_t XCONF_create_list(XCONF *__conf, const char *__path, XCONFList **list) 
 }
 
 
-#define XCONF_set(_type, _width, _field)                                                                \
-uint32_t XCONF_set_##_type##_width(XCONF *__conf, const char *__path, _type##_width##_t val) {          \
-  Value *value = nullptr;                                                                               \
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);                                       \
-  if (result != XCONF_SUCCESS) { return result; }                                                       \
-  if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }              \
-                                                                                                        \
-  value->type = XCONF_VAL_##_field##_width;                                                             \
-  value->val._field##_width = val;                                                                      \
-  value->size = _width / 8;                                                                             \
-                                                                                                        \
-  return XCONF_SUCCESS;                                                                                 \
-}                                                                                                       \
+#define XCONF_set(_type, _width, _field)                                                       \
+uint32_t XCONF_set_##_type##_width(XCONF *__conf, const char *__path, _type##_width##_t val) { \
+  Value *value = nullptr;                                                                      \
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_BUILD, &value);     \
+  if (result != XCONF_SUCCESS) { return result; }                                              \
+  if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }     \
+                                                                                               \
+  value->type = XCONF_VAL_##_field##_width;                                                    \
+  value->val._field##_width = val;                                                             \
+  value->size = _width / 8;                                                                    \
+                                                                                               \
+  return XCONF_SUCCESS;                                                                        \
+}                                                                                              \
+
+#define XCONF_set_keyword(_name, _a_type, _v_type, _field)                                 \
+uint32_t XCONF_set_##_name(XCONF *__conf, const char *__path, _a_type val) {               \
+  Value *value = nullptr;                                                                  \
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_BUILD, &value); \
+  if (result != XCONF_SUCCESS) { return result; }                                          \
+  if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); } \
+                                                                                           \
+  value->type = XCONF_VAL_##_v_type;                                                       \
+  value->val._field = val;                                                                 \
+  value->size = 0;                                                                         \
+                                                                                           \
+  return XCONF_SUCCESS;                                                                    \
+}                                                                                          \
 
 XCONF_set(int,  32, I)
 XCONF_set(int,  64, I)
@@ -175,9 +194,22 @@ XCONF_set(float,  64, F)
 XCONF_set(float, 128, F)
 XCONF_set(float, 256, F)
 
+XCONF_set_keyword(bool, bool, BOOLEAN, BOOLEAN)
+
+uint32_t XCONF_set_null(XCONF *__conf, const char *__path) {
+  Value *value = nullptr;
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_BUILD, &value);
+  if (result != XCONF_SUCCESS) { return result; }
+  if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }
+  value->type = XCONF_VAL_NULL;
+  value->val.U256 = 0;
+  value->size = 0;
+  return XCONF_SUCCESS;
+}
+
 uint32_t XCONF_set_text(XCONF *__conf, const char *__path, const char *text) {
   Value *value = nullptr;
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_BUILD, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }
 
@@ -191,7 +223,7 @@ uint32_t XCONF_set_text(XCONF *__conf, const char *__path, const char *text) {
 
 uint32_t XCONF_set_object(XCONF *__conf, const char *__path, XCONFObject *object) {
   Value *value = nullptr;
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_BUILD, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }
 
@@ -204,7 +236,7 @@ uint32_t XCONF_set_object(XCONF *__conf, const char *__path, XCONFObject *object
 
 uint32_t XCONF_set_list(XCONF *__conf, const char *__path, XCONFList *list) {
   Value *value = nullptr;
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_BUILD, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }
 
@@ -217,7 +249,7 @@ uint32_t XCONF_set_list(XCONF *__conf, const char *__path, XCONFList *list) {
 
 uint32_t XCONF_getValueType(XCONF *__conf, const char *__path, enum XCONF_VALUE_TYPE_ENUM *type) {
   Value *value = nullptr;
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_ACCESS, &value);
   if (result != XCONF_SUCCESS) { return result; }
 
   *type = value->type;
@@ -225,17 +257,30 @@ uint32_t XCONF_getValueType(XCONF *__conf, const char *__path, enum XCONF_VALUE_
   return XCONF_SUCCESS;
 }
 
-#define XCONF_get(_type, _width, _field)                                                                \
-uint32_t XCONF_get_##_type##_width(XCONF *__conf, const char *__path, _type##_width##_t *val) {         \
-  Value *value = nullptr;                                                                               \
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);                                       \
-  if (result != XCONF_SUCCESS) { return result; }                                                       \
-  if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }              \
-                                                                                                        \
-  *val = value->val._field##_width;                                                                     \
-                                                                                                        \
-  return XCONF_SUCCESS;                                                                                 \
-}                                                                                                       \
+#define XCONF_get(_type, _width, _field)                                                        \
+uint32_t XCONF_get_##_type##_width(XCONF *__conf, const char *__path, _type##_width##_t *val) { \
+  Value *value = nullptr;                                                                       \
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_ACCESS, &value);     \
+  if (result != XCONF_SUCCESS) { return result; }                                               \
+  if (value->type == XCONF_VAL_UNINITIALIZED) { return XCONF_ERROR_FIELD_UNDEFINED; }           \
+                                                                                                \
+  *val = value->val._field##_width;                                                             \
+                                                                                                \
+  return XCONF_SUCCESS;                                                                         \
+}                                                                                               \
+
+#define XCONF_get_keyword(_name, _a_type, _field)                                           \
+uint32_t XCONF_get_##_name(XCONF *__conf, const char *__path, _a_type *val) {               \
+  Value *value = nullptr;                                                                   \
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_ACCESS, &value); \
+  if (result != XCONF_SUCCESS) { return result; }                                           \
+  if (value->type == XCONF_VAL_UNINITIALIZED) { return XCONF_ERROR_FIELD_UNDEFINED; }       \
+                                                                                            \
+  *val = value->val._field;                                                                 \
+                                                                                            \
+  return XCONF_SUCCESS;                                                                     \
+}                                                                                           \
+
 
 XCONF_get(int,  32, I)
 XCONF_get(int,  64, I)
@@ -252,9 +297,20 @@ XCONF_get(float,  64, F)
 XCONF_get(float, 128, F)
 XCONF_get(float, 256, F)
 
+// XCONF_get_keyword(bool, bool, BOOLEAN)
+
+uint32_t XCONF_get_bool(XCONF *__conf, const char *__path, bool *val) {
+  Value *value = nullptr;
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_ACCESS, &value);
+  if (result != XCONF_SUCCESS) { return result; }
+  if (value->type == XCONF_VAL_UNINITIALIZED) { return XCONF_ERROR_FIELD_UNDEFINED; }
+  *val = value->val.BOOLEAN;
+  return XCONF_SUCCESS;
+}
+
 uint32_t XCONF_get_list(XCONF *__conf, const char *__path, XCONFList **list) {
   Value *value = nullptr;
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_ACCESS, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }
   *list = value->val.LIST;
@@ -263,7 +319,7 @@ uint32_t XCONF_get_list(XCONF *__conf, const char *__path, XCONFList **list) {
 
 uint32_t XCONF_get_object(XCONF *__conf, const char *__path, XCONFObject **object) {
   Value *value = nullptr;
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_ACCESS, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }
   *object = value->val.OBJECT;
@@ -272,7 +328,7 @@ uint32_t XCONF_get_object(XCONF *__conf, const char *__path, XCONFObject **objec
 
 uint32_t XCONF_get_text(XCONF *__conf, const char *__path, const char **text, uint32_t *size) {
   Value *value = nullptr;
-  uint32_t result = XCONF_get_path_value(__conf, __path, &value);
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_ACCESS, &value);
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { releaseValue(value, INSTANCE.allocator); }
   *text = value->val.TEXT->content;
@@ -415,13 +471,15 @@ uint32_t XCONFList_get_text(XCONFList *__list, uint32_t index, const char **text
   return XCONF_SUCCESS;
 }
 
-static uint32_t XCONF_get_path_value(XCONF *__conf, const char *__path, Value **value) {
+static uint32_t XCONF_get_path_value(XCONF *__conf, const char *__path, uint32_t action, Value **value) {
   XCONFContext_clear(INSTANCE.context);
+  INSTANCE.context->path_action = action;
   XCONFContext_enter(INSTANCE.context, __conf);
   XCONFTokenizer_setSrc(INSTANCE.tokenizer, __path);
   Path *path = parsePath(INSTANCE.tokenizer, INSTANCE.context, &INSTANCE.errInfo, INSTANCE.allocator);
+  XCONFContext_exit(INSTANCE.context);
   if (!path) { return INSTANCE.errInfo.code; }
-  *value = Array_virt2real(INSTANCE.context->value_array, path);
+  *value = Array_virt2real(INSTANCE.context->value_array, path->value);
   return XCONF_SUCCESS;
 }
 
@@ -433,11 +491,11 @@ static uint32_t XCONFList_get_value(XCONFList *__list, uint32_t index, Value **v
 }
 
 uint32_t XCONF_keys(XCONF *__conf, const char **keys, uint32_t *count) {
-  *count = Array_length(__conf->keys);
+  *count = Array_length(__conf->pairs);
   if (!keys) { return XCONF_SUCCESS; }
-  REFER(char) *v_keys = Array_first_real(__conf->keys);
+  Pair *pairs = Array_first_real(__conf->pairs);
   for (uint32_t i = 0; i < *count; i++) {
-    keys[i] = Array_virt2real(INSTANCE.context->key_array, v_keys[i]);
+    keys[i] = Array_virt2real(INSTANCE.context->key_array, pairs[i].key);
   }
   return XCONF_SUCCESS;
 }

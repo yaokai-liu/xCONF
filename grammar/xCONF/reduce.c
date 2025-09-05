@@ -30,6 +30,8 @@
 #include "generated/tokens.gen.h"
 #include "error_info.h"
 
+static void fill_error_info(ErrInfo *errInfo, const Token *start, const Token *end);
+
 List * XCONF_List_0 (Token args[], XCONFContext *, ErrInfo *, const Allocator *) {
   return args[0].value;
 }
@@ -50,61 +52,77 @@ Object * XCONF_Object_EXT (Token args[], XCONFContext *, ErrInfo *, const Alloca
   return args[0].value;
 }
 
-Pair * XCONF_Pair_0 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
+Pair * XCONF_Pair_0 (Token args[], XCONFContext *, ErrInfo *errInfo, const Allocator *) {
   Path *path = args[1].value;
   Value *value = args[4].value;
 
-  Value *val = Array_virt2real(context->value_array, path);
-  if (val->type != XCONF_VAL_UNINITIALIZED) { return nullptr; }
+  if (path->value) {
+    errInfo->code = XCONF_ERROR_CONFLICT_KEY;
+    fill_error_info(errInfo, &args[1], &args[4]);
+    return nullptr;
+  }
 
-  allocator->memcpy(val, value, sizeof(Value));
+  path->value = value;
 
   return (Pair *) XCONF_TOKEN_Pair;
 }
 
-Pair * XCONF_Pair_1 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
+Pair * XCONF_Pair_1 (Token args[], XCONFContext *, ErrInfo *errInfo, const Allocator *) {
   Path *path = args[1].value;
   Value *value = args[4].value;
 
-  Value *val = Array_virt2real(context->value_array, path);
-  if (val->type != XCONF_VAL_UNINITIALIZED) { return nullptr; }
+  if (path->value) {
+    errInfo->code = XCONF_ERROR_CONFLICT_KEY;
+    fill_error_info(errInfo, &args[1], &args[4]);
+  }
 
-  allocator->memcpy(val, value, sizeof(Value));
+  path->value = value;
 
   return (Pair *) XCONF_TOKEN_Pair;
 }
 
-Pair * XCONF_Pair_2 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
+Pair * XCONF_Pair_2 (Token args[], XCONFContext *, ErrInfo *errInfo, const Allocator *) {
   Path *path = args[1].value;
   Value *value = args[3].value;
 
-  Value *val = Array_virt2real(context->value_array, path);
-  if (val->type != XCONF_VAL_UNINITIALIZED) { return nullptr; }
+  if (path->value) {
+    errInfo->code = XCONF_ERROR_CONFLICT_KEY;
+    fill_error_info(errInfo, &args[1], &args[3]);
+    return nullptr;
+  }
 
-  allocator->memcpy(val, value, sizeof(Value));
+  path->value = value;
 
   return (Pair *) XCONF_TOKEN_Pair;
 }
 
-Pair * XCONF_Pair_3 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
+Pair * XCONF_Pair_3 (Token args[], XCONFContext *, ErrInfo *errInfo, const Allocator *) {
   Path *path = args[0].value;
   Value *value = args[2].value;
 
-  Value *val = Array_virt2real(context->value_array, path);
-  if (val->type != XCONF_VAL_UNINITIALIZED) { return nullptr; }
+  if (path->value) {
+    errInfo->code = XCONF_ERROR_CONFLICT_KEY;
+    fill_error_info(errInfo, &args[0], &args[2]);
+    return nullptr;
+  }
 
-  allocator->memcpy(val, value, sizeof(Value));
+  path->value = value;
+
   return (Pair *) XCONF_TOKEN_Pair;
 }
 
-Pair * XCONF_Pair_4 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
+Pair * XCONF_Pair_4 (Token args[], XCONFContext *, ErrInfo *errInfo, const Allocator *) {
   Path *path = args[0].value;
   Value *value = args[2].value;
 
-  Value *val = Array_virt2real(context->value_array, path);
-  if (val->type != XCONF_VAL_UNINITIALIZED) { return nullptr; }
+  if (path->value) {
+    errInfo->code = XCONF_ERROR_CONFLICT_KEY;
+    fill_error_info(errInfo, &args[0], &args[2]);
+    return nullptr;
+  }
 
-  allocator->memcpy(val, value, sizeof(Value));
+  path->value = value;
+
   return (Pair *) XCONF_TOKEN_Pair;
 }
 
@@ -116,62 +134,100 @@ Pairs * XCONF_Pairs_1 (Token [], XCONFContext *, ErrInfo *, const Allocator *) {
   return (Pairs *) XCONF_TOKEN_Pairs;
 }
 
-Path * XCONF_Path_0 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
+Path * XCONF_Path_0 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
   Path *path = args[0].value;
   REFER(char_t) key = args[2].value;
 
-  Value *obj = Array_virt2real(context->value_array, path);
-  if (obj->type == XCONF_VAL_UNINITIALIZED) {
-    obj->val.OBJECT = Object_new(allocator);
-    obj->type = XCONF_VAL_OBJECT;
-    obj->size = 0;
-  } else if (obj->type != XCONF_VAL_OBJECT) {
+  Pair *pair = path;
+  if (!pair->value) {
+    const Value val = { .type = XCONF_VAL_OBJECT, .size = 0, .val.OBJECT = Object_new(allocator) };
+    Array_append(context->value_array, &val, 1);
+    pair->value = Array_last_virt(context->value_array);
+  } else if (pair->value->type != XCONF_VAL_OBJECT) {
+    errInfo->code = XCONF_ERROR_CONFLICT_KEY;
+    fill_error_info(errInfo, &args[0], &args[0]);
     return nullptr;
   }
 
-  Object *object = obj->val.OBJECT;
-  REFER(Value) v_val = AVLTree_get(object->mapping, (uint64_t) key);
-  if (!v_val) {
-    Value val = {.type = XCONF_VAL_UNINITIALIZED};
-    Array_append(context->value_array, &val, 1);
-    Array_append(object->keys, &key, 1);
-    v_val = Array_last_virt(context->value_array);
-    AVLTree_set(object->mapping, (uint64_t) key, v_val);
+  const Object *object = pair->value->val.OBJECT;
+  REFER(Pair) v_pair = AVLTree_get(object->mapping, (uint64_t) key);
+  if (!v_pair) {
+    Array_append(object->pairs, &(Pair){.key = key, .value = nullptr}, 1);
+    v_pair = Array_last_virt(object->pairs);
+    AVLTree_set(object->mapping, (uint64_t) key, v_pair);
   }
 
-  return v_val;
+  if (!pair->key) { allocator->free(pair); }
+
+  return Array_virt2real(object->pairs, v_pair);
 }
 
-Path * XCONF_Path_1 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
-  REFER(char_t) key = args[1].value;
+Path * XCONF_Path_1 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
+  Path *path = args[0].value;
+  Value *number = args[2].value;
 
-  Object *object = context->object;
-  REFER(Value) v_val = AVLTree_get(object->mapping, (uint64_t) key);
-  if (!v_val) {
-    Value val = {.type = XCONF_VAL_UNINITIALIZED};
+  Pair *pair = path;
+  if (!pair->value) {
+    List *list = Array_new(sizeof(REFER(Value)), XCONF_REFER_VALUE_ARRAY, allocator);
+    const Value val = { .type = XCONF_VAL_LIST, .size = 0, .val.LIST = list };
     Array_append(context->value_array, &val, 1);
-    Array_append(object->keys, &key, 1);
-    v_val = Array_last_virt(context->value_array);
-    AVLTree_set(object->mapping, (uint64_t) key, v_val);
+    pair->value = Array_last_virt(context->value_array);
+  } else if (pair->value->type != XCONF_VAL_LIST) {
+    errInfo->code = XCONF_ERROR_CONFLICT_KEY;
+    fill_error_info(errInfo, &args[0], &args[0]);
+    return nullptr;
   }
 
-  return v_val;
+  List *list = pair->value->val.LIST;
+  if (number->type != XCONF_VAL_I32) {
+    errInfo->code = XCONF_ERROR_INDEX_OUT_OF_RANGE;
+    fill_error_info(errInfo, &args[2], &args[2]);
+    return nullptr;
+  }
+  uint32_t index = number->val.I32;
+  if (index > Array_length(list)) {
+    errInfo->code = XCONF_ERROR_INDEX_OUT_OF_RANGE;
+    fill_error_info(errInfo, &args[2], &args[2]);
+    return nullptr;
+  }
+  if (index == Array_length(list)) {
+    REFER(Value) *v_value = Array_first_virt(context->value_array);
+    Array_append(list, &v_value, 1);
+  }
+  REFER(Value) *v_value = Array_real_addr(list, index);
+
+  pair = allocator->calloc(1, sizeof(Pair));
+  pair->value = *v_value;
+  pair->key = nullptr;
+  return pair;
 }
 
 Path * XCONF_Path_2 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
+  REFER(char_t) key = args[1].value;
+
+  Object *object = context->object;
+  REFER(Pair) v_pair = AVLTree_get(object->mapping, (uint64_t) key);
+  if (!v_pair) {
+    Array_append(object->pairs, &(Pair){.key = key, .value = nullptr}, 1);
+    v_pair = Array_last_virt(object->pairs);
+    AVLTree_set(object->mapping, (uint64_t) key, v_pair);
+  }
+
+  return Array_virt2real(object->pairs, v_pair);
+}
+
+Path * XCONF_Path_3 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
   REFER(char_t) key = args[0].value;
 
   Object *object = context->object;
-  REFER(Value) v_val = AVLTree_get(object->mapping, (uint64_t) key);
-  if (!v_val) {
-    Value val = {.type = XCONF_VAL_UNINITIALIZED};
-    Array_append(context->value_array, &val, 1);
-    Array_append(object->keys, &key, 1);
-    v_val = Array_last_virt(context->value_array);
-    AVLTree_set(object->mapping, (uint64_t) key, v_val);
+  REFER(Pair) v_pair = AVLTree_get(object->mapping, (uint64_t) key);
+  if (!v_pair) {
+    Array_append(object->pairs, &(Pair){.key = key, .value = nullptr}, 1);
+    v_pair = Array_last_virt(object->pairs);
+    AVLTree_set(object->mapping, (uint64_t) key, v_pair);
   }
 
-  return v_val;
+  return Array_virt2real(object->pairs, v_pair);
 }
 
 Texts * XCONF_Texts_0 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
@@ -216,8 +272,13 @@ Value * XCONF_Value_1 (Token args[], XCONFContext *context, ErrInfo *, const All
   return v_val;
 }
 
-Value * XCONF_Value_2 (Token args[], XCONFContext *, ErrInfo *, const Allocator *) {
-  return args[0].value;
+Value * XCONF_Value_2 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
+  Value *value = args[0].value;
+
+  Array_append(context->value_array, value, 1);
+  REFER(Value) v_val = Array_last_virt(context->value_array);
+
+  return v_val;
 }
 
 Value * XCONF_Value_3 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
@@ -271,3 +332,11 @@ Values * XCONF_Values_1 (Token args[], XCONFContext *, ErrInfo *, const Allocato
   return values;
 }
 
+inline void fill_error_info(ErrInfo *errInfo, const Token *start, const Token *end) {
+  errInfo->start.offset = start->start.offset;
+  errInfo->start.lineno = start->start.lineno;
+  errInfo->start.column = start->start.column;
+  errInfo->end.offset   = end->end.offset;
+  errInfo->end.lineno   = end->end.lineno;
+  errInfo->end.column   = end->end.column;
+}

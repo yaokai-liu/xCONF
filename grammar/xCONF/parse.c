@@ -42,9 +42,10 @@ static Object *clean_parse_stack(Stack *state_stack, Stack *token_stack, const A
 Object *parse(XCONFTokenizer *tokenizer, XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
   Token token = {}, result = {};
   Token args[MAX_ARGC] = {};
+  uint32_t state = XCONF_state_;
   Stack *state_stack = Stack_new(allocator);
   Stack *token_stack = Stack_new(allocator);
-  uint32_t state = XCONF_state_;
+  context->path_action = XCONF_PATH_ACTION_BUILD;
   Stack_push(state_stack, &state, sizeof(int32_t));
   uint32_t status = XCONFTokenizer_next(tokenizer, &token, errInfo, allocator);
   if (status != XCONF_SUCCESS) { return nullptr; }

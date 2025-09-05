@@ -30,6 +30,6 @@
 
 #include <check.h>
 
-Suite *number_suite();
+Suite *parse_suite();
 
 #endif //XCONF_TESTCASES_H

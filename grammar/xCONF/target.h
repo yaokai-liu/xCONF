@@ -36,8 +36,9 @@
 
 
 typedef struct Text Text;
-typedef struct Value Value;
+typedef struct Pair Pair;
 typedef struct Array List; // Array<REFER(Value)>
+typedef struct Value Value;
 typedef struct XCONFObject XCONFObject, Object;
 
 typedef struct Text {
@@ -46,8 +47,8 @@ typedef struct Text {
 } Text;
 
 typedef struct XCONFObject {
-  Array *   keys;     // Array<REFER(char_t)>
-  AVLTree * mapping;  // AVLTree<REFER(char_t), REFER(Value)>
+  Array *   pairs;     // Array<Pair>
+  AVLTree * mapping;  // AVLTree<REFER(char_t), REFER(Pair)>
 } XCONFObject;
 
 enum XCONF_VALUE_CATEGORY_ENUM: uint32_t {
@@ -91,8 +92,8 @@ typedef Array Values; // Array<REFER(Value)>
 typedef Array Pairs; // Array<Pair>
 
 typedef struct Pair {
-  void *key;
-  Value *value;
+  REFER(char_t) key;
+  REFER(Value)  value;
 } Pair;
 
 typedef struct WrapperedText {
@@ -106,8 +107,8 @@ typedef Text Texts;
 
 // Maybe reinterpretation of `Path` here
 // makes a little bit confused, but there is no wrong.
-// Because every `Path` is only mapping to a `Value`.
-typedef Value Path;
+// Because every `Path` is only mapping to a `Pair`.
+typedef Pair Path;
 
 Object *Object_new(const Allocator *allocator);
 

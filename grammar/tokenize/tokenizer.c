@@ -78,9 +78,12 @@ XCONFTokenizer_next(XCONFTokenizer *tokenizer, Token *token, ErrInfo *errInfo, c
   terminal.location.offset = tokenizer->offset;
   const uint32_t length = single_tokenize(pText, &terminal, allocator);
   if (terminal.type == XCONF_TOKEN_BAD_TOKEN) {
-    errInfo->lineno = tokenizer->lineno;
-    errInfo->column = tokenizer->column;
-    errInfo->offset = tokenizer->offset;
+    errInfo->start.lineno = tokenizer->lineno;
+    errInfo->start.column = tokenizer->column;
+    errInfo->start.offset = tokenizer->offset;
+    errInfo->end.lineno = tokenizer->lineno;
+    errInfo->end.column = tokenizer->column;
+    errInfo->end.offset = tokenizer->offset;
     errInfo->code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
     return errInfo->code;
   }

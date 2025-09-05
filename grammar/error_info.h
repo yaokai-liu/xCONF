@@ -30,18 +30,7 @@
 
 #include <stdint.h>
 typedef struct ErrInfo {
-  /**
-   * @description offset in src string
-   */
-  uint32_t offset;
-  /**
-   * @description line number in src file
-   */
-  uint32_t lineno;
-  /**
-   * @description column offset in the line in src file
-   */
-  uint32_t column;
+  Location start, end;
   /**
    * @description error code
    */

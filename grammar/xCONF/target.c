@@ -30,7 +30,7 @@
 
 Object *Object_new(const Allocator *allocator) {
   Object *object = allocator->calloc(1, sizeof(Object));
-  object->keys = Array_new(sizeof(REFER(char_t)), XCONF_REFER_KEY_ARRAY, allocator);
+  object->pairs = Array_new(sizeof(Pair), XCONF_PAIR_ARRAY, allocator);
   object->mapping = AVLTree_new(allocator, nullptr);
   return object;
 }
@@ -64,7 +64,7 @@ void releasePath(Path *, const Allocator *) {
 }
 
 void releaseObject(Object *object, const Allocator *) {
-  releasePrimeArray(object->keys);
+  releasePrimeArray(object->pairs);
   AVLTree_destroy(object->mapping, nullptr);
 }
 
