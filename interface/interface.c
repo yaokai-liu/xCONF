@@ -106,8 +106,10 @@ uint32_t XCONF_compose(XCONF *__conf, char *buffer, uint32_t buffer_size) {
   if (result != XCONF_SUCCESS) { return result; }
   fseek(file, 0, SEEK_END);
   uint32_t size = ftell(file);
+  fseek(file, 0, SEEK_SET);
   if (size > buffer_size) { return XCONF_ERROR_OVER_BUFFER_SIZE; }
   fread(buffer, sizeof(char), size, file);
+  buffer[size] = '\0';
   fclose(file);
   return XCONF_SUCCESS;
 }

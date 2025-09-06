@@ -174,6 +174,9 @@ Path * XCONF_Path_0 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
     Array_append(context->value_array, &val, 1);
     pair->value = Array_last_virt(context->value_array);
   }
+  if (!Array_virt2real(context->key_array, pair->key)) {
+    Array_append((List *) pair->key, &pair->value, 1);
+  }
   Value *value = Array_virt2real(context->value_array, pair->value);
   if (value->type != XCONF_VAL_OBJECT) {
     errInfo->code = XCONF_ERROR_CONFLICT_KEY;
@@ -225,7 +228,7 @@ Path * XCONF_Path_1 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
   REFER(Value) *v_value = Array_real_addr(list, index);
 
   pair = allocator->calloc(1, sizeof(Pair));
-    pair->value = v_value ? *v_value : nullptr;
+  pair->value = v_value ? *v_value : nullptr;
   pair->key = (void *) list;
   return pair;
 }

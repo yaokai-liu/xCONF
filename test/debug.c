@@ -26,17 +26,19 @@
  **/
 
 #include <stdio.h>
-#include <stdint.h>
-
 #include "xCONF/xCONF.h"
 
 int main () {
   XCONF_init();
 
-  const char *string = "{afsad-olajfYNbl: 0x128940LLU, lfk1iouagdb_lfk70: 'doafui nqoaisdufhapdihfbado9ugbb 09ifndo98  0 8g o b itv v\n\b\v', "
-                       "[daoj] = [\"sdfasd\"], .daoj[1]: -012543655e22L}";
+  const char *string = "{data[0].a[0].b = 0x81363.4p238LL}";
   XCONF *conf = nullptr;
   if (XCONF_parse(string, &conf) != XCONF_SUCCESS) { XCONF_finish(); return -1; }
+
+  char buffer[256];
+  XCONF_compose(conf, buffer, 256);
+
+  printf("%s\n", buffer);
 
   XCONF_finish();
   return 0;
