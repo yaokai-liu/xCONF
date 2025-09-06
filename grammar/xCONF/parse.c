@@ -107,6 +107,7 @@ Object *failed_to_get_next_state(
   int32_t state = 0;
   Stack_top(state_stack, (&state), sizeof(int32_t));
   releaseToken(token, allocator);
+  allocator->free(token->value);
   allocator->free(token);
   return clean_parse_stack(state_stack, token_stack, allocator);
 }
@@ -114,7 +115,10 @@ Object *failed_to_get_next_state(
 Object *failed_to_produce(
     Stack *state_stack, Stack *token_stack, Token args[], uint32_t argc, const Allocator *allocator
 ) {
-  for (uint32_t i = 0; i < argc; i++) { releaseToken(&args[i], allocator); }
+  for (uint32_t i = 0; i < argc; i++) {
+    releaseToken(&args[i], allocator);
+    allocator->free(args[i].value);
+  }
   return clean_parse_stack(state_stack, token_stack, allocator);
 }
 
@@ -123,6 +127,7 @@ Object *clean_parse_stack(Stack *state_stack, Stack *token_stack, const Allocato
   while (!Stack_empty(token_stack)) {
     Stack_pop(token_stack, &token, sizeof(Token));
     releaseToken(&token, allocator);
+    allocator->free(token.value);
   }
   Stack_clear(token_stack);
   Stack_clear(state_stack);

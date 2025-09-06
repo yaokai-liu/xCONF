@@ -86,9 +86,29 @@ typedef struct Array          XCONFList;
 typedef struct XCONFInstance  XCONFInstance;
 typedef struct XCONFObject    XCONFObject, XCONF;
 
+/**
+ * @description init the module
+ * @return XCONF_SUCCESS
+ */
 uint32_t XCONF_init();
+
+/**
+ * @description clean all involved data and environments except the key cache
+ * @return XCONF_SUCCESS
+ */
 uint32_t XCONF_reset();
-uint32_t XCONF_finish(void);
+
+/**
+* @description clean up the path environments of across configurations operations
+ * @return XCONF_SUCCESS
+ */
+uint32_t XCONF_clear();
+
+/**
+ * @description finish the module
+ * @return XCONF_SUCCESS
+ */
+uint32_t XCONF_finish();
 
 /**
  * @description load configurations from a file
@@ -238,8 +258,5 @@ uint32_t XCONFList_get_text(XCONFList *__list, uint32_t index, const char **text
 
 uint32_t XCONF_keys(XCONF *__conf, const char **keys, uint32_t *count);
 uint32_t XCONFList_count(XCONFList *__list, uint32_t *count);
-
-uint32_t XCONF_destroy_object(XCONFObject *object);
-uint32_t XCONF_destroy_list(XCONFList *list);
 
 #endif //__XCONF_H__

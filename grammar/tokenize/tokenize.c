@@ -40,14 +40,14 @@
 static uint32_t t_KEY(const char_t *input, Terminal *result, const Allocator *allocator);
 static uint32_t t_NUMBER(const char_t *input, Terminal *result, bool negative ,
                          uint32_t adic, const Allocator *allocator);
-static uint32_t t_INT_DIGITALS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_INT_DIGITALS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_INT_DIGITALS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_INT_DIGITALS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_FRAC_DIGITALS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_FRAC_DIGITALS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_FRAC_DIGITALS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_FRAC_DIGITALS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_INT_DIGITS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_INT_DIGITS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_INT_DIGITS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_INT_DIGITS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_FRAC_DIGITS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_FRAC_DIGITS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_FRAC_DIGITS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+static uint32_t t_FRAC_DIGITS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
 static uint32_t try_keyword_FALSE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 static uint32_t try_keyword_NULL(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 static uint32_t try_keyword_TRUE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
@@ -77,7 +77,7 @@ static uint32_t try_pass_comment(const char *input, uint32_t *lineno, uint32_t *
 
 
 // [a-fA-F0-9]+
-inline uint32_t t_INT_DIGITALS_adic16(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
+inline uint32_t t_INT_DIGITS_adic16(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
   const char_t *pZero = input;
   if (!isHexDigital(pZero)) { return 0; }
   while ('0' == *pZero) { pZero++; }
@@ -100,7 +100,7 @@ inline uint32_t t_INT_DIGITALS_adic16(const char_t *const input, uint32_t *effec
   return pText - input;
 }
 // [0-9]+
-inline uint32_t t_INT_DIGITALS_adic10(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
+inline uint32_t t_INT_DIGITS_adic10(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
   const char_t *pZero = input;
   if (!isDecDigital(pZero)) { return 0; }
   while ('0' == *pZero) { pZero++; }
@@ -119,7 +119,7 @@ inline uint32_t t_INT_DIGITALS_adic10(const char_t *const input, uint32_t *effec
   return pText - input;
 }
 // [0-7]+
-inline uint32_t t_INT_DIGITALS_adic8(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
+inline uint32_t t_INT_DIGITS_adic8(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
   const char_t *pZero = input;
   if (!isOctDigital(pZero)) { return 0; }
   while ('0' == *pZero) { pZero++; }
@@ -138,7 +138,7 @@ inline uint32_t t_INT_DIGITALS_adic8(const char_t *const input, uint32_t *effect
   return pText - input;
 }
 // [01]+
-inline uint32_t t_INT_DIGITALS_adic2(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
+inline uint32_t t_INT_DIGITS_adic2(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
   const char_t *pZero = input;
   if (!isBinDigital(pZero)) { return 0; }
   while ('0' == *pZero) { pZero++; }
@@ -157,7 +157,7 @@ inline uint32_t t_INT_DIGITALS_adic2(const char_t *const input, uint32_t *effect
   return pText - input;
 }
 // (?=\.)[a-fA-F0-9]+
-inline uint32_t t_FRAC_DIGITALS_adic16(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
+inline uint32_t t_FRAC_DIGITS_adic16(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
   const char_t *pText = input;
   if (!isHexDigital(pText)) { return 0; }
   uint32_t trialing_zeros = 0;
@@ -184,7 +184,7 @@ inline uint32_t t_FRAC_DIGITALS_adic16(const char_t *const input, uint32_t *effe
   return length;
 }
 // (?=\.)[0-9]+
-inline uint32_t t_FRAC_DIGITALS_adic10(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
+inline uint32_t t_FRAC_DIGITS_adic10(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
   const char_t *pText = input;
   if (!isDecDigital(pText)) { return 0; }
   uint32_t trialing_zeros = 0;
@@ -207,7 +207,7 @@ inline uint32_t t_FRAC_DIGITALS_adic10(const char_t *const input, uint32_t *effe
   return length;
 }
 // (?=\.)[0-7]+
-inline uint32_t t_FRAC_DIGITALS_adic8(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
+inline uint32_t t_FRAC_DIGITS_adic8(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
   const char_t *pText = input;
   if (!isOctDigital(pText)) { return 0; }
   uint32_t trialing_zeros = 0;
@@ -230,7 +230,7 @@ inline uint32_t t_FRAC_DIGITALS_adic8(const char_t *const input, uint32_t *effec
   return length;
 }
 // (?=\.)[01]+
-inline uint32_t t_FRAC_DIGITALS_adic2(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
+inline uint32_t t_FRAC_DIGITS_adic2(const char_t *const input, uint32_t *effective_length, uint256_t *value) {
   const char_t *pText = input;
   if (!isBinDigital(pText)) { return 0; }
   uint32_t trialing_zeros = 0;
@@ -262,10 +262,10 @@ inline uint32_t t_FRAC_DIGITALS_adic2(const char_t *const input, uint32_t *effec
 
 typedef uint32_t tokenize_t(const char_t *, uint32_t *, uint256_t *);
 static tokenize_t *const DIGITAL_FUNC_TOOLS[4][2] = {
-    [ADIC_TYPE_16] = { [INT_DIGITAL_FUNC] = t_INT_DIGITALS_adic16, [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITALS_adic16},
-    [ADIC_TYPE_10] = { [INT_DIGITAL_FUNC] = t_INT_DIGITALS_adic10, [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITALS_adic10},
-    [ADIC_TYPE_8 ] = { [INT_DIGITAL_FUNC] = t_INT_DIGITALS_adic8 , [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITALS_adic8 },
-    [ADIC_TYPE_2 ] = { [INT_DIGITAL_FUNC] = t_INT_DIGITALS_adic2 , [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITALS_adic2 },
+    [ADIC_TYPE_16] = { [INT_DIGITAL_FUNC] = t_INT_DIGITS_adic16, [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITS_adic16},
+    [ADIC_TYPE_10] = { [INT_DIGITAL_FUNC] = t_INT_DIGITS_adic10, [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITS_adic10},
+    [ADIC_TYPE_8 ] = { [INT_DIGITAL_FUNC] = t_INT_DIGITS_adic8 , [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITS_adic8 },
+    [ADIC_TYPE_2 ] = { [INT_DIGITAL_FUNC] = t_INT_DIGITS_adic2 , [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITS_adic2 },
 };
 static const uint32_t ADIC_BASE[] = {
     [ADIC_TYPE_16] = 16,
@@ -293,6 +293,7 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
   bool exp_negative = false;
   enum XCONF_VALUE_CATEGORY_ENUM type = XCONF_VAL_CAT_INT;
 
+  // TODO: supporting for special numbers: inf, Inf, INF, nan, Nan, NaN, NAN
   uint32_t length = DIGITAL_FUNC_TOOLS[adic][INT_DIGITAL_FUNC](pText, &int_eff_length, &integer);
   if (!length) { return 0; } else { pText += length; }
   if (*pText == '.') {
@@ -305,7 +306,7 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
     pText ++;
     exp_negative = (*pText == '-');
     if (isSign(pText)) { pText++; }
-    length = DIGITAL_FUNC_TOOLS[adic][INT_DIGITAL_FUNC](pText, nullptr, &exponent);
+    length = DIGITAL_FUNC_TOOLS[ADIC_TYPE_10][INT_DIGITAL_FUNC](pText, nullptr, &exponent);
     if (!length) { return 0; }
     pText += length;
   }
@@ -330,17 +331,17 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
     const uint32_t exponent_base = ADIC_BASE[adic];
     if (size == 4 ) {
       float32_t real = ((float32_t) (uint32_t) integer);
-      float32_t exp = (float32_t) pow((float32_t) exponent_base, (int32_t) exponent);
+      float32_t exp = (float32_t) pow((float32_t) exponent_base, (int32_t) exponent - 1);
       value->val.F32 = (negative) ? -real * exp : real * exp;
       value->type = XCONF_VAL_F32;
     } else if (size == 8 ) {
       float64_t real = ((float64_t) (uint64_t) integer);
-      float64_t exp = (float64_t) pow((float64_t) exponent_base, (int64_t) exponent);
+      float64_t exp = (float64_t) pow((float64_t) exponent_base, (int64_t) exponent - 1);
       value->val.F64 = (negative) ? -real * exp : real * exp;
       value->type = XCONF_VAL_F64;
     } else if (size == 16) {
       float128_t real = ((float128_t) (uint128_t) integer);
-      float128_t exp = (float128_t) pow((float128_t) exponent_base, (int128_t) exponent);
+      float128_t exp = (float128_t) pow((float128_t) exponent_base, (int128_t) exponent - 1);
       value->val.F128 = (negative) ? -real * exp : real * exp;
       value->type = XCONF_VAL_F128;
     } else { return 0; }
@@ -449,18 +450,25 @@ uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,
     pText ++;
   }
 
-  const uint32_t length = n_pred + pText - input + n_succ;
-  result->type = XCONF_TOKEN_TEXT;
+  uint32_t content_length = pText - input;
+  const uint32_t cost_length = n_pred + content_length + n_succ;
   WrapperedText *text = allocator->calloc(1, sizeof(WrapperedText));
+  text->content = allocator->malloc((content_length + 1) * sizeof(char_t));
+  text->length = 0;
+  for (uint32_t i = 0; i < content_length; i++, text->length++) {
+    // TODO: support for escape operations
+    if (input[i] == '\\') { i++; }
+    text->content[text->length] = input[i];
+  }
+  text->content[text->length] = '\0';
   text->n_pred = n_pred;
   text->n_succ = n_succ;
-  text->length = pText - input;
-  text->content = allocator->malloc((text->length + 1) * sizeof(char_t));
-  allocator->memcpy(text->content, input, text->length);
-  text->content[text->length] = '\0';\
-  result->length = length;
+
+  result->type = XCONF_TOKEN_TEXT;
+  result->length = cost_length;
   result->value = text;
-  return length;
+
+  return cost_length;
 }
 
 #define fn_try_keyword_val(_kw, _type, val)                                                 \

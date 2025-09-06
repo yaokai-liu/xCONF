@@ -62,10 +62,6 @@ void releaseToken(Token *token, const Allocator *allocator) {
     releaseTokenCase(List, List)
     releaseTokenCase(NUMBER, Value)
     releaseTokenCase(TEXT, WrapperedText)
-    case XCONF_TOKEN_KEY: {
-      if (token->value) { allocator->free(token->value); }
-      break;
-    }
     default: {}
   }
 }

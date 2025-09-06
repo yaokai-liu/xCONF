@@ -114,7 +114,7 @@ Pair * XCONF_Pair_2 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
   return (Pair *) XCONF_TOKEN_Pair;
 }
 
-Pair * XCONF_Pair_3 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *) {
+Pair * XCONF_Pair_3 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
   Path *path = args[0].value;
   Value *value = args[2].value;
 
@@ -128,6 +128,7 @@ Pair * XCONF_Pair_3 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
 
   if (!Array_virt2real(context->key_array, path->key)) {
     Array_append((List *) path->key, &value, 1);
+    allocator->free(path);
   } else {
     path->value = value;
   }
@@ -168,16 +169,22 @@ Path * XCONF_Path_0 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
   Path *path = args[0].value;
   REFER(char_t) key = args[2].value;
 
-  Pair *pair = path;
-  if (!pair->value) {
+  if (!path->value) {
     const Value val = { .type = XCONF_VAL_OBJECT, .size = 0, .val.OBJECT = Object_new(allocator) };
     Array_append(context->value_array, &val, 1);
-    pair->value = Array_last_virt(context->value_array);
+    path->value = Array_last_virt(context->value_array);
   }
-  if (!Array_virt2real(context->key_array, pair->key)) {
-    Array_append((List *) pair->key, &pair->value, 1);
+  if (!Array_virt2real(context->key_array, path->key)) {
+    List *list = (List *) path->key;
+    uint32_t n_vals = Array_length(list);
+    REFER(Value) *vals = Array_first_real(list);
+    for (uint32_t i = 0; i < n_vals; i++) {
+      if (vals[i] == path->value) { goto __has_value; }
+    }
+    Array_append(list, &path->value, 1);
+    __has_value:
   }
-  Value *value = Array_virt2real(context->value_array, pair->value);
+  Value *value = Array_virt2real(context->value_array, path->value);
   if (value->type != XCONF_VAL_OBJECT) {
     errInfo->code = XCONF_ERROR_CONFLICT_KEY;
     fill_error_info(errInfo, &args[0], &args[0]);
@@ -191,7 +198,7 @@ Path * XCONF_Path_0 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
     AVLTree_set(object->mapping, (uint64_t) key, v_pair);
   }
 
-  if (!pair->key || !Array_virt2real(context->key_array, pair->key)) { allocator->free(pair); }
+  if (!Array_virt2real(context->key_array, path->key)) { allocator->free(path); }
 
   return Array_virt2real(object->pairs, v_pair);
 }
@@ -200,14 +207,13 @@ Path * XCONF_Path_1 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
   Path *path = args[0].value;
   Value *number = args[2].value;
 
-  Pair *pair = path;
-  if (!pair->value) {
+  if (!path->value) {
     List *list = Array_new(sizeof(REFER(Value)), XCONF_REFER_VALUE_ARRAY, allocator);
     const Value val = { .type = XCONF_VAL_LIST, .size = 0, .val.LIST = list };
     Array_append(context->value_array, &val, 1);
-    pair->value = Array_last_virt(context->value_array);
+    path->value = Array_last_virt(context->value_array);
   }
-  Value *value = Array_virt2real(context->value_array, pair->value);
+  Value *value = Array_virt2real(context->value_array, path->value);
   if (value->type != XCONF_VAL_LIST) {
     errInfo->code = XCONF_ERROR_CONFLICT_KEY;
     fill_error_info(errInfo, &args[0], &args[0]);
@@ -220,6 +226,7 @@ Path * XCONF_Path_1 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
     return nullptr;
   }
   uint32_t index = number->val.I32;
+  allocator->free(number);
   if (index > Array_length(list)) {
     errInfo->code = XCONF_ERROR_INDEX_OUT_OF_RANGE;
     fill_error_info(errInfo, &args[2], &args[2]);
@@ -227,7 +234,7 @@ Path * XCONF_Path_1 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
   }
   REFER(Value) *v_value = Array_real_addr(list, index);
 
-  pair = allocator->calloc(1, sizeof(Pair));
+  Pair *pair = allocator->calloc(1, sizeof(Pair));
   pair->value = v_value ? *v_value : nullptr;
   pair->key = (void *) list;
   return pair;
@@ -261,12 +268,15 @@ Path * XCONF_Path_3 (Token args[], XCONFContext *context, ErrInfo *, const Alloc
   return Array_virt2real(object->pairs, v_pair);
 }
 
-Texts * XCONF_Texts_0 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
+Texts * XCONF_Texts_0 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
   Texts *texts = args[0].value;
   WrapperedText *text = args[1].value;
 
   XCONFContent_add_text_content(context, text->content, text->length);
   texts->size += text->length;
+
+  allocator->free(text->content);
+  allocator->free(text);
 
   return texts;
 }
@@ -278,6 +288,9 @@ Texts * XCONF_Texts_1 (Token args[], XCONFContext *context, ErrInfo *, const All
 
   texts->content = XCONFContext_new_text_content(context, text->content, text->length);
   texts->size = text->length;
+
+  allocator->free(text->content);
+  allocator->free(text);
 
   return texts;
 }
@@ -303,11 +316,13 @@ Value * XCONF_Value_1 (Token args[], XCONFContext *context, ErrInfo *, const All
   return v_val;
 }
 
-Value * XCONF_Value_2 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
+Value * XCONF_Value_2 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {
   Value *value = args[0].value;
 
   Array_append(context->value_array, value, 1);
   REFER(Value) v_val = Array_last_virt(context->value_array);
+
+  allocator->free(value);
 
   return v_val;
 }

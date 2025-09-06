@@ -31,12 +31,12 @@
 int main () {
   XCONF_init();
 
-  const char *string = "{data[0].a[0].b = 0x81363.4p238LL}";
+  const char *string = "{data[0].a = 0x81363.4p238LL, data[1].b = 3.1415926535L, data[2].what[0].the.heil.is[0].that: ['I don\\'t know.']}";
   XCONF *conf = nullptr;
   if (XCONF_parse(string, &conf) != XCONF_SUCCESS) { XCONF_finish(); return -1; }
 
-  char buffer[256];
-  XCONF_compose(conf, buffer, 256);
+  char buffer[512];
+  if (XCONF_compose(conf, buffer, 512) != XCONF_SUCCESS) { XCONF_finish(); return -2; }
 
   printf("%s\n", buffer);
 

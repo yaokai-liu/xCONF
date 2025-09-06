@@ -34,12 +34,12 @@
 #define fprint_u32(file, value)  fprintf(file, "%u"     , value->val.U32)
 #define fprint_i64(file, value)  fprintf(file, "%ldL"   , value->val.I64)
 #define fprint_u64(file, value)  fprintf(file, "%luLU"  , value->val.U64)
-#define fprint_f32(file, value)  fprintf(file, "%.1f"   , value->val.F32)
-#define fprint_f64(file, value)  fprintf(file, "%.1lfL" , value->val.F64)
+#define fprint_f32(file, value)  fprintf(file, "%#e"    , value->val.F32)
+#define fprint_f64(file, value)  fprintf(file, "%#lgL"  , value->val.F64)
+#define fprint_f128(file, value)  fprintf(file, "%#LgLL"  , value->val.F128)
 
 static void fprint_i128(FILE *file, const Value *value);
 static void fprint_u128(FILE *file, const Value *value);
-static void fprint_f128(FILE *file, const Value *value);
 static void fprint_text(FILE *file, const Value *value, const XCONFContext *context);
 
 uint32_t writeValue(FILE *file, Value *value, uint32_t indent, XCONFContext *context) {
@@ -159,19 +159,6 @@ inline void fprint_u128(FILE *file, const Value *value) {
   }
   for (uint32_t i = count - 1; i < count; i--) { fputc(digits[i], file); }
   fputs("LLU", file);
-}
-
-inline void fprint_f128(FILE *file, const Value *value) {
-  // TODO: real format print function for 128bit float number
-  fputs("float(", file);
-  uint128_t val = value->val.U128;
-  char digits[64] = {}; uint32_t count = 0;
-  while (val > 0) {
-    digits[count++] = val % 10 + '0';
-    val /= 10;
-  }
-  for (uint32_t i = count - 1; i < count; i--) { fputc(digits[i], file); }
-  fputs("LLU)", file);
 }
 
 inline void fprint_text(FILE *file, const Value *value, const XCONFContext *context) {

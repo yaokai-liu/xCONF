@@ -52,7 +52,24 @@ uint32_t XCONF_init() {
   return XCONF_SUCCESS;
 }
 
-uint32_t XCONF_finish(void) {
+uint32_t XCONF_reset() {
+  Array_reset(INSTANCE.context->text_array, nullptr);
+  Array_reset(INSTANCE.context->value_array, (destruct_t *) releaseValue);
+  INSTANCE.context->path_action = XCONF_PATH_ACTION_UNSET;
+  XCONFContext_clear(INSTANCE.context);
+
+  return XCONF_SUCCESS;
+}
+
+uint32_t XCONF_clear() {
+  INSTANCE.context->object = nullptr;
+  XCONFContext_clear(INSTANCE.context);
+  XCONFTokenizer_setSrc(INSTANCE.tokenizer, nullptr);
+  INSTANCE.context->path_action = XCONF_PATH_ACTION_UNSET;
+  return XCONF_SUCCESS;
+}
+
+uint32_t XCONF_finish() {
   XCONFContext_destroy(INSTANCE.context);
   XCONFTokenizer_destroy(INSTANCE.tokenizer);
   return XCONF_SUCCESS;
@@ -74,13 +91,6 @@ uint32_t XCONF_load(const char *__filepath, XCONF **__conf) {
   fclose(file);
 
   return result;
-}
-
-uint32_t XCONF_reset() {
-  INSTANCE.context->object = nullptr;
-  XCONFContext_clear(INSTANCE.context);
-  XCONFTokenizer_setSrc(INSTANCE.tokenizer, nullptr);
-  return XCONF_SUCCESS;
 }
 
 uint32_t XCONF_parse(const char *__string, XCONF **__conf) {
@@ -474,12 +484,12 @@ uint32_t XCONFList_get_text(XCONFList *__list, uint32_t index, const char **text
 }
 
 static uint32_t XCONF_get_path_value(XCONF *__conf, const char *__path, uint32_t action, Value **value) {
-  XCONFContext_clear(INSTANCE.context);
   INSTANCE.context->path_action = action;
-  XCONFContext_enter(INSTANCE.context, __conf);
+  bool entered = false;
+  if (INSTANCE.context->object != __conf) { XCONFContext_enter(INSTANCE.context, __conf); entered = true; }
   XCONFTokenizer_setSrc(INSTANCE.tokenizer, __path);
   Path *path = parsePath(INSTANCE.tokenizer, INSTANCE.context, &INSTANCE.errInfo, INSTANCE.allocator);
-  XCONFContext_exit(INSTANCE.context);
+  if (entered) { XCONFContext_exit(INSTANCE.context); }
   if (!path) { return INSTANCE.errInfo.code; }
   *value = Array_virt2real(INSTANCE.context->value_array, path->value);
   return XCONF_SUCCESS;

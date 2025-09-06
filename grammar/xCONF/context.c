@@ -38,6 +38,7 @@ XCONFContext *XCONFContext_new(const Allocator *allocator) {
   context->value_array = Array_new(sizeof(Value), XCONF_VALUE_ARRAY, allocator);
   context->obj_stack = Stack_new(allocator);
   context->object = nullptr;
+  context->path_action = XCONF_PATH_ACTION_UNSET;
 
   Array_append(context->text_array, "", 1);
   Array_append(context->key_array, "", 1);
@@ -50,16 +51,9 @@ void XCONFContext_destroy(XCONFContext *context) {
   Trie_destroy(context->key_trie);
   releasePrimeArray(context->key_array);
   releasePrimeArray(context->text_array);
-  uint32_t n_values = Array_length(context->value_array);
-  Value *values = Array_first_real(context->value_array);
-  for (uint32_t i = 0; i < n_values; i++) {
-    switch (values[i].type) {
-      case XCONF_VAL_LIST: { return releaseList(values[i].val.LIST, context->allocator); }
-      case XCONF_VAL_OBJECT: { return releaseObject(values[i].val.OBJECT, context->allocator); }
-      default:{}
-    }
-  }
-  Stack_clear(context->obj_stack);
+  Array_reset(context->value_array, (destruct_t *) releaseValue);
+  Array_destroy(context->value_array);
+  XCONFContext_clear(context);
   context->allocator->free(context->obj_stack);
 
   context->key_trie = nullptr;
@@ -114,6 +108,13 @@ inline void XCONFContext_exit(XCONFContext *context) {
 }
 
 void XCONFContext_clear(XCONFContext *context) {
+  do {
+    if (context->object) {
+      releaseObject(context->object, context->allocator);
+      context->allocator->free(context->object);
+    }
+    XCONFContext_exit(context);
+  } while (context->object || !Stack_empty(context->obj_stack));
   Stack_clear(context->obj_stack);
   context->object = nullptr;
 }

@@ -35,10 +35,22 @@ Object *Object_new(const Allocator *allocator) {
   return object;
 }
 
-void releaseValue(Value *val, const Allocator *allocator) {
-  switch (val->type) {
-    case XCONF_VAL_LIST: { return releaseList(val->val.LIST, allocator); }
-    case XCONF_VAL_OBJECT: { return releaseObject(val->val.OBJECT, allocator); }
+void releaseValue(Value *value, const Allocator *allocator) {
+  switch (value->type) {
+    case XCONF_VAL_LIST: {
+      releaseList(value->val.LIST, allocator);
+      allocator->free(value->val.LIST);
+      return;
+    }
+    case XCONF_VAL_OBJECT: {
+      releaseObject(value->val.OBJECT, allocator);
+      allocator->free(value->val.OBJECT);
+      return;
+    }
+    case XCONF_VAL_TEXT: {
+      releaseTexts(value->val.TEXT, allocator);
+      allocator->free(value->val.TEXT);
+    }
     default:{}
   }
 }
