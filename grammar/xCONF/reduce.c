@@ -190,17 +190,13 @@ Path * XCONF_Path_0 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
     fill_error_info(errInfo, &args[0], &args[0]);
     return nullptr;
   }
-  const Object *object = value->val.OBJECT;
-  REFER(Pair) v_pair = AVLTree_get(object->mapping, (uint64_t) key);
-  if (!v_pair) {
-    Array_append(object->pairs, &(Pair){.key = key, .value = nullptr}, 1);
-    v_pair = Array_last_virt(object->pairs);
-    AVLTree_set(object->mapping, (uint64_t) key, v_pair);
-  }
+  Object *object = value->val.OBJECT;
+  Pair *pair = Dict_get(object, &key);
+  if (!pair) { Dict_set(object, &key, &(Pair){.key = key, .value = nullptr}); }
 
   if (!Array_virt2real(context->key_array, path->key)) { allocator->free(path); }
 
-  return Array_virt2real(object->pairs, v_pair);
+  return Dict_get(object, &key);
 }
 
 Path * XCONF_Path_1 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
@@ -208,7 +204,7 @@ Path * XCONF_Path_1 (Token args[], XCONFContext *context, ErrInfo *errInfo, cons
   Value *number = args[2].value;
 
   if (!path->value) {
-    List *list = Array_new(sizeof(REFER(Value)), XCONF_REFER_VALUE_ARRAY, allocator);
+    List *list = List_new(allocator);
     const Value val = { .type = XCONF_VAL_LIST, .size = 0, .val.LIST = list };
     Array_append(context->value_array, &val, 1);
     path->value = Array_last_virt(context->value_array);
@@ -244,28 +240,18 @@ Path * XCONF_Path_2 (Token args[], XCONFContext *context, ErrInfo *, const Alloc
   REFER(char_t) key = args[1].value;
 
   Object *object = context->object;
-  REFER(Pair) v_pair = AVLTree_get(object->mapping, (uint64_t) key);
-  if (!v_pair) {
-    Array_append(object->pairs, &(Pair){.key = key, .value = nullptr}, 1);
-    v_pair = Array_last_virt(object->pairs);
-    AVLTree_set(object->mapping, (uint64_t) key, v_pair);
-  }
-
-  return Array_virt2real(object->pairs, v_pair);
+  Pair *pair = Dict_get(object, &key);
+  if (!pair) { Dict_set(object, &key, &(Pair){.key = key, .value = nullptr}); }
+  return Dict_get(object, &key);
 }
 
 Path * XCONF_Path_3 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *) {
   REFER(char_t) key = args[0].value;
 
   Object *object = context->object;
-  REFER(Pair) v_pair = AVLTree_get(object->mapping, (uint64_t) key);
-  if (!v_pair) {
-    Array_append(object->pairs, &(Pair){.key = key, .value = nullptr}, 1);
-    v_pair = Array_last_virt(object->pairs);
-    AVLTree_set(object->mapping, (uint64_t) key, v_pair);
-  }
-
-  return Array_virt2real(object->pairs, v_pair);
+  Pair *pair = Dict_get(object, &key);
+  if (!pair) { Dict_set(object, &key, &(Pair){.key = key, .value = nullptr}); }
+  return Dict_get(object, &key);
 }
 
 Texts * XCONF_Texts_0 (Token args[], XCONFContext *context, ErrInfo *, const Allocator *allocator) {

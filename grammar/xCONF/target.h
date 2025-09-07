@@ -31,25 +31,23 @@
 #include "array.h"
 #include "dict.h"
 #include "token.h"
-#include "avl-tree.h"
 #include "xCONF/xCONF.h"
 
-
+typedef Array List; // Array<REFER(Value)>
+typedef Dict Object; // Dict<REFER(char), Pair>
 typedef struct Text Text;
 typedef struct Pair Pair;
-typedef struct Array List; // Array<REFER(Value)>
 typedef struct Value Value;
-typedef struct XCONFObject XCONFObject, Object;
+
+#define Object_new(allocator) \
+  Dict_new(sizeof(REFER(char)), sizeof(Pair), (key_t *) refer2u64, XCONF_OBJECT_ID, nullptr, nullptr, allocator)
+#define List_new(allocator) \
+  Array_new(sizeof(REFER(Value)), XCONF_REFER_VALUE_ARRAY, allocator)
 
 typedef struct Text {
   uint32_t      size;
   REFER(char_t) content;
 } Text;
-
-typedef struct XCONFObject {
-  Array *   pairs;     // Array<Pair>
-  AVLTree * mapping;  // AVLTree<REFER(char_t), REFER(Pair)>
-} XCONFObject;
 
 enum XCONF_VALUE_CATEGORY_ENUM: uint32_t {
   XCONF_VAL_CAT_NULL,
@@ -109,8 +107,6 @@ typedef Text Texts;
 // makes a little bit confused, but there is no wrong.
 // Because every `Path` is only mapping to a `Pair`.
 typedef Pair Path;
-
-Object *Object_new(const Allocator *allocator);
 
 void releaseValue(Value *, const Allocator *);
 void releasePair(Pair *, const Allocator *);

@@ -29,7 +29,6 @@
 #define TOKEN_H
 #include "char_t.h"
 #include "allocator.h"
-#include "xCONF/xCONF.h"
 #include <stdint.h>
 
 /**

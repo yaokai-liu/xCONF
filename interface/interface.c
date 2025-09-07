@@ -125,7 +125,7 @@ uint32_t XCONF_compose(XCONF *__conf, char *buffer, uint32_t buffer_size) {
 }
 
 uint32_t XCONF_create_conf(XCONF **__conf) {
-  *__conf = Object_new(INSTANCE.allocator);
+  *__conf = Dict_new(sizeof(REFER(char)), sizeof(Pair), nullptr, XCONF_OBJECT_ID, nullptr, nullptr, INSTANCE.allocator);
   return XCONF_SUCCESS;
 }
 
@@ -153,7 +153,7 @@ uint32_t XCONF_create_list(XCONF *__conf, const char *__path, XCONFList **list) 
   if (result != XCONF_SUCCESS) { return result; }
   if (value->type != XCONF_VAL_UNINITIALIZED) { return XCONF_ERROR_CREATING_EXISTED; }
 
-  value->val.LIST = Array_new(sizeof(REFER(Value)), XCONF_REFER_VALUE_ARRAY, INSTANCE.allocator);
+  value->val.LIST = List_new(INSTANCE.allocator);
   value->type = XCONF_VAL_LIST;
   value->size = 0;
 
@@ -423,7 +423,9 @@ uint32_t XCONFList_getValueType(XCONFList *__list, uint32_t index, enum XCONF_VA
   uint32_t result = XCONFList_get_value(__list, index, &value);
   if (result != XCONF_SUCCESS) { return result; }
 
-  *type = value->type;
+  if (value->type == XCONF_VAL_UNINITIALIZED) { return XCONF_ERROR_FIELD_UNDEFINED; }
+
+  if (*type) { *type = value->type; }
 
   return XCONF_SUCCESS;
 }
@@ -503,9 +505,9 @@ static uint32_t XCONFList_get_value(XCONFList *__list, uint32_t index, Value **v
 }
 
 uint32_t XCONF_keys(XCONF *__conf, const char **keys, uint32_t *count) {
-  *count = Array_length(__conf->pairs);
+  *count = Dict_count(__conf);
   if (!keys) { return XCONF_SUCCESS; }
-  Pair *pairs = Array_first_real(__conf->pairs);
+  Pair *pairs = Dict_elements(__conf);
   for (uint32_t i = 0; i < *count; i++) {
     keys[i] = Array_virt2real(INSTANCE.context->key_array, pairs[i].key);
   }
@@ -517,12 +519,28 @@ uint32_t XCONFList_count(XCONFList *__list, uint32_t *count) {
   return XCONF_SUCCESS;
 }
 
-uint32_t XCONF_destroy_object(XCONFObject *object) {
-  releaseObject(object, INSTANCE.allocator);
-  INSTANCE.allocator->free(object);
+uint32_t XCONF_remove_key(XCONF *__conf, const char *__path, const char *__key) {
+  Value *value = nullptr;
+  uint32_t result = XCONF_get_path_value(__conf, __path, XCONF_PATH_ACTION_ACCESS, &value);
+  if (result != XCONF_SUCCESS) { return result; }
+  if (value->type != XCONF_VAL_OBJECT) { return XCONF_ERROR_CONFLICT_KEY; }
+  Object *object = value->val.OBJECT;
+  REFER(char) key = Trie_get(INSTANCE.context->key_trie, __key);
+  if (!key) { return XCONF_ERROR_NO_SUCH_KEY; }
+  Dict_remove(object, (const void **) &key, 1);
+  Dict_tidy(object);
   return XCONF_SUCCESS;
 }
-uint32_t XCONF_destroy_list(XCONFList *list) {
-  releasePrimeArray(list);
+
+uint32_t XCONFList_remove_value(XCONFList *__list, uint32_t index) {
+  Value *value = nullptr;
+  uint32_t result = XCONFList_get_value(__list, index, &value);
+  if (result != XCONF_SUCCESS) { return result; }
+  Array_delete(__list, index, 1);
+  return XCONF_SUCCESS;
+}
+
+uint32_t XCONF_destroy(XCONF *__conf) {
+  Dict_destroy(__conf);
   return XCONF_SUCCESS;
 }

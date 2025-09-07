@@ -70,19 +70,19 @@ void XCONFContext_state_action(XCONFContext *context, uint32_t state, Token *, c
   if (context->path_action == XCONF_PATH_ACTION_ACCESS) { return; }
   switch (state) {
     case XCONF_state_LEFT_BRACKET:
-    // case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_BRACKET:
-    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_BRACKET:
-    // case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
-    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
+    case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_BRACKET:
+    // case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_BRACKET:
+    case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
+    // case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
     {
       XCONFContext_enter(context, Object_new(context->allocator));
       break;
     }
-    // case XCONF_state_Object:
-    // case XCONF_state_LEFT_BRACKET_Path_COLON_Object:
-    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_Object:
-    // case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_Object:
-    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_Object:
+    case XCONF_state_Object:
+    case XCONF_state_LEFT_BRACKET_Path_COLON_Object:
+    // case XCONF_state_LEFT_BRACKET_Path_ASSIGN_Object:
+    case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_Object:
+    // case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_Object:
     {
       XCONFContext_exit(context);
       break;
@@ -110,8 +110,7 @@ inline void XCONFContext_exit(XCONFContext *context) {
 void XCONFContext_clear(XCONFContext *context) {
   do {
     if (context->object) {
-      releaseObject(context->object, context->allocator);
-      context->allocator->free(context->object);
+      Dict_destroy(context->object);
     }
     XCONFContext_exit(context);
   } while (context->object || !Stack_empty(context->obj_stack));

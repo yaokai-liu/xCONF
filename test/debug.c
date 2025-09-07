@@ -40,6 +40,7 @@ int main () {
 
   printf("%s\n", buffer);
 
+  XCONF_destroy(conf);
   XCONF_finish();
   return 0;
 }

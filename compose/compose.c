@@ -122,14 +122,14 @@ uint32_t writeList(FILE *file, List *list, uint32_t indent, XCONFContext *contex
 
 uint32_t writeObject(FILE *file, Object *object, uint32_t indent, XCONFContext *context) {
   fputs("{\n", file);
-  uint32_t n_pairs = Array_length(object->pairs);
-  Pair *pairs = Array_first_real(object->pairs);
+  const Pair *pairs = Dict_elements(object);
+  const uint32_t n_pairs = Dict_count(object);
   for (uint32_t i = 0; i < n_pairs; i++) {
     char *key = Array_virt2real(context->key_array, pairs[i].key);
     for (uint32_t j = 0; j < indent + 1; j++) { fprintf(file, "  "); }
     fprintf(file, "%s: ", key);
     Value *val = Array_virt2real(context->value_array, pairs[i].value);
-    uint32_t result = writeValue(file, val, indent + 1, context);
+    const uint32_t result = writeValue(file, val, indent + 1, context);
     if (result != XCONF_SUCCESS) { return result; }
     if (i < n_pairs - 1) { fputs(",\n", file); } else { fputs("\n", file); }
   }

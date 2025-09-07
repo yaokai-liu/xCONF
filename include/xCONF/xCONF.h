@@ -84,7 +84,7 @@ typedef float128_t    float256_t; // optional: support for 256-bit float point n
 
 typedef struct Array          XCONFList;
 typedef struct XCONFInstance  XCONFInstance;
-typedef struct XCONFObject    XCONFObject, XCONF;
+typedef struct Dict           XCONF, XCONFObject;
 
 /**
  * @description init the module
@@ -258,5 +258,10 @@ uint32_t XCONFList_get_text(XCONFList *__list, uint32_t index, const char **text
 
 uint32_t XCONF_keys(XCONF *__conf, const char **keys, uint32_t *count);
 uint32_t XCONFList_count(XCONFList *__list, uint32_t *count);
+
+uint32_t XCONF_remove_key(XCONF *__conf, const char *__path, const char *__key);
+uint32_t XCONFList_remove_value(XCONFList *__list, uint32_t index);
+
+uint32_t XCONF_destroy(XCONF *__CONF);
 
 #endif //__XCONF_H__

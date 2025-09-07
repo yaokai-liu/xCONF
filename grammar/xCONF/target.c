@@ -28,13 +28,6 @@
 #include "target.h"
 #include "context.h"
 
-Object *Object_new(const Allocator *allocator) {
-  Object *object = allocator->calloc(1, sizeof(Object));
-  object->pairs = Array_new(sizeof(Pair), XCONF_PAIR_ARRAY, allocator);
-  object->mapping = AVLTree_new(allocator, nullptr);
-  return object;
-}
-
 void releaseValue(Value *value, const Allocator *allocator) {
   switch (value->type) {
     case XCONF_VAL_LIST: {
@@ -43,8 +36,7 @@ void releaseValue(Value *value, const Allocator *allocator) {
       return;
     }
     case XCONF_VAL_OBJECT: {
-      releaseObject(value->val.OBJECT, allocator);
-      allocator->free(value->val.OBJECT);
+      Dict_destroy(value->val.OBJECT);
       return;
     }
     case XCONF_VAL_TEXT: {
@@ -76,8 +68,7 @@ void releasePath(Path *, const Allocator *) {
 }
 
 void releaseObject(Object *object, const Allocator *) {
-  releasePrimeArray(object->pairs);
-  AVLTree_destroy(object->mapping, nullptr);
+  return Dict_reset(object);
 }
 
 void releaseList(List *list, const Allocator *) {
