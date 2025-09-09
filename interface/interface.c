@@ -82,8 +82,9 @@ uint32_t XCONF_load(const char *__filepath, XCONF **__conf) {
   uint32_t size = ftell(file);
   fseek(file, 0, SEEK_SET);
 
-  char *buffer = malloc(size * sizeof(char));
+  char *buffer = malloc((size + 1) * sizeof(char));
   fread(buffer, sizeof(char), size, file);
+  buffer[size] = '\0';
 
   uint32_t result = XCONF_parse(buffer, __conf);
 

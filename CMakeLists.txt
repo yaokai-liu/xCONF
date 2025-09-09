@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     set(TARGET_PREFIX "")
 else ()
-    set(TARGET_PREFIX "xCONF_")
+    set(TARGET_PREFIX "${PROJECT_NAME}_")
 endif ()
 
 add_compile_options("-funsigned-char")

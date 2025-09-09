@@ -2,3 +2,4 @@
 json
 grammar/generated
 output
+cmake-*

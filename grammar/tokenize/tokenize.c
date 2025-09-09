@@ -194,8 +194,9 @@ inline uint32_t t_FRAC_DIGITS_adic10(const char_t *const input, uint32_t *effect
       if (!isDecDigital(pText + 1)) { break; }
       n_separator ++; pText ++; continue;
     }
-    if ('0' == *pText) { trialing_zeros ++; continue; }
-    uint32_t rate = 10 * (1 + trialing_zeros);
+    if ('0' == *pText) { trialing_zeros ++; pText++; continue; }
+    uint32_t rate = 10;
+    for (uint32_t i = 0; i < trialing_zeros; i++) { rate *= 10; }
     if ('1' <= *pText && *pText <= '9') {
       *value = ((*value) * rate) + (*pText - '0');
     } else { break; }

@@ -29,15 +29,17 @@
 #include "xCONF/xCONF.h"
 
 int main () {
+  XCONF *conf = nullptr;
+  char buffer[512];
   XCONF_init();
 
-  const char *string = "{data[0].a = 0x81363.4p238LL, data[1].b = 3.1415926535L, data[2].what[0].the.heil.is[0].that: ['I don\\'t know.']}";
-  XCONF *conf = nullptr;
-  if (XCONF_parse(string, &conf) != XCONF_SUCCESS) { XCONF_finish(); return -1; }
+  // const char *string = "{data[0].a = 0x81363.4p238LL, data[1].b = 3.1415926535L, data[2].what[0].the.heil.is[0].that: ['I don\\'t know.']}";
+  // if (XCONF_parse(string, &conf) != XCONF_SUCCESS) { XCONF_finish(); return -1; }
+  // if (XCONF_compose(conf, buffer, 512) != XCONF_SUCCESS) { XCONF_finish(); return -2; }
+  // printf("%s\n", buffer);
 
-  char buffer[512];
+  if (XCONF_load("test.xconf", &conf) != XCONF_SUCCESS) { XCONF_finish(); return -1; }
   if (XCONF_compose(conf, buffer, 512) != XCONF_SUCCESS) { XCONF_finish(); return -2; }
-
   printf("%s\n", buffer);
 
   XCONF_destroy(conf);
