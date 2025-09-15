@@ -48,14 +48,23 @@ static uint32_t t_FRAC_DIGITS_adic16(const char_t *input, uint32_t *effective_le
 static uint32_t t_FRAC_DIGITS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
 static uint32_t t_FRAC_DIGITS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
 static uint32_t t_FRAC_DIGITS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+
 static uint32_t try_keyword_FALSE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 static uint32_t try_keyword_NULL(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 static uint32_t try_keyword_TRUE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 static uint32_t try_keyword_false(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 static uint32_t try_keyword_null(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 static uint32_t try_keyword_true(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
-static uint32_t tokenize_single_symbol(const char_t *input, Terminal *result, const Allocator *allocator);
 
+static uint32_t try_keyword_inf(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+static uint32_t try_keyword_INF(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+static uint32_t try_keyword_nan(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+static uint32_t try_keyword_NAN(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+
+static uint32_t tokenize_letter_n(const char_t * input, Terminal * result, const Allocator * allocator);
+static uint32_t tokenize_letter_N(const char_t * input, Terminal * result, const Allocator * allocator);
+
+static uint32_t tokenize_single_symbol(const char_t *input, Terminal *result, const Allocator *allocator);
 static uint32_t tokenize_number(const char_t *input, Terminal *result, const Allocator *allocator);
 static uint32_t tokenize_text(const char_t *input, uint32_t n_pred,
                               const char_t *succ, uint32_t n_succ,
@@ -282,7 +291,7 @@ static const uint32_t ADIC_BASE[] = {
  * is ADIC_TYPE_8:     [0-7]+((\.[0-7]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}|[lL]{0,2}[uU]?)
  * is ADIC_TYPE_2:     [0-9]+((\.[0-9]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}|[lL]{0,2}[uU]?)
  */
-uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
+inline uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
                          const bool negative , const uint32_t adic, const Allocator *const allocator) {
   const char_t *pText = input;
 
@@ -294,7 +303,6 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
   bool exp_negative = false;
   enum XCONF_VALUE_CATEGORY_ENUM type = XCONF_VAL_CAT_INT;
 
-  // TODO: supporting for special numbers: inf, Inf, INF, nan, Nan, NaN, NAN
   uint32_t length = DIGITAL_FUNC_TOOLS[adic][INT_DIGITAL_FUNC](pText, &int_eff_length, &integer);
   if (!length) { return 0; } else { pText += length; }
   if (*pText == '.') {
@@ -366,7 +374,7 @@ uint32_t t_NUMBER(const char_t *const input, Terminal *const result,
   return result->length;
 }
 
-uint32_t t_KEY(const char_t * const input, Terminal * const result, const Allocator * const allocator) {
+inline uint32_t t_KEY(const char_t * const input, Terminal * const result, const Allocator * const allocator) {
   const char_t *pText = input;
   if (isKeyHeader(pText)) {
     pText++;
@@ -405,40 +413,124 @@ uint32_t t_KEY(const char_t * const input, Terminal * const result, const Alloca
   return length ? result->length + text_off : 0;                  \
 } while(false)
 
+#define try_special_number(text_off, pattern, _type, _size, _value) do {    \
+  if (strcmp_o(pText, &(pattern[text_off])) == (lenof(pattern) - text_off)  \
+       && !isKeyChar(pText + lenof(pattern))) {                             \
+    Value *value = allocator->calloc(1, sizeof(Value));                     \
+    value->type = _type;                                                    \
+    value->size = _size;                                                    \
+    value->val.F32 = negative ? -(_value) : (_value);                       \
+    result->type = XCONF_TOKEN_NUMBER;                                      \
+    result->value = value;                                                  \
+    result->length = pText - input + lenof(pattern);                        \
+    return result->length;                                                  \
+  }                                                                         \
+} while (false)
+
 /*
  * [+-]?0[xX][a-fA-F0-9]+((\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?[lL]{0,2})|[lL]{0,2}[uU]?) |
  * [+-]?0[bB][01]+((\.[01]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2})|[lL]{0,2}[uU]?) |
  * [+-]?0[oO]?[0-7]+((\.[0-7]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}|[lL]{0,2}[uU]?) |
  * [+-]?[0-9]+((\.[0-9]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}|[lL]{0,2}[uU]?)
  */
-uint32_t tokenize_number(const char_t * const input, Terminal * const result, const Allocator * const allocator) {
+inline uint32_t tokenize_number(const char_t * const input, Terminal * const result,
+                                const Allocator * const allocator) {
   const char_t *pText = input;
   const bool negative = ('-' == *pText);
-  if (isSign(pText)) { pText++; }
-  if ('0' == *pText) {
-    switch (pText[1]) {
-      case 'x':
-      case 'X': {
-        tokenize_adic_number(2, ADIC_TYPE_16);
-      }
-      case 'o':
-      case 'O': {
-        tokenize_adic_number(2, ADIC_TYPE_8);
-      }
-      case 'b':
-      case 'B': {
-        tokenize_adic_number(2, ADIC_TYPE_2);
-      }
-      default: {}
-    }
+  if (isSign(pText)) {
+    pText++;
+    while (*pText == ' ' || *pText == '\t') { pText++; }
   }
-  tokenize_adic_number(0, ADIC_TYPE_10);
+  switch (*pText) {
+    case 'i': {
+      try_special_number(0, "inf", XCONF_VAL_F32, 4, INFINITY);
+      return 0;
+     }
+    case 'I': {
+      try_special_number(0, "INF", XCONF_VAL_F32, 4, INFINITY);
+      return 0;
+     }
+    case 'n': {
+      try_special_number(0, "nan", XCONF_VAL_F32, 4, NAN);
+      return 0;
+     }
+    case 'N': {
+      try_special_number(0, "NAN", XCONF_VAL_F32, 4, NAN);
+      return 0;
+    }
+    case '0': {
+      switch (pText[1]) {
+        case 'x':
+        case 'X': {
+          tokenize_adic_number(2, ADIC_TYPE_16);
+        }
+        case 'o':
+        case 'O': {
+          tokenize_adic_number(2, ADIC_TYPE_8);
+        }
+        case 'b':
+        case 'B': {
+          tokenize_adic_number(2, ADIC_TYPE_2);
+        }
+        default: {}
+      }
+    }
+    default: tokenize_adic_number(0, ADIC_TYPE_10);
+  }
 }
 
+inline uint32_t try_keyword_inf(const char_t * const input, const uint32_t offs, Terminal * const result,
+                                const Allocator * const allocator) {
+  const char *pText = input;
+  constexpr bool negative = false;
+  try_special_number(offs, "inf", XCONF_VAL_F32, 4, INFINITY);
+  return t_KEY(input - offs, result, allocator);
+}
+
+inline uint32_t try_keyword_INF(const char_t * const input, const uint32_t offs, Terminal * const result,
+                                const Allocator * const allocator) {
+  const char *pText = input;
+  constexpr bool negative = false;
+  try_special_number(offs, "INF", XCONF_VAL_F32, 4, INFINITY);
+  return t_KEY(input - offs, result, allocator);
+}
+
+
+inline uint32_t try_keyword_nan(const char_t * const input, const uint32_t offs, Terminal * const result,
+                                const Allocator * const allocator) {
+  const char *pText = input;
+  constexpr bool negative = false;
+  try_special_number(1, "inf", XCONF_VAL_F32, 4, NAN);
+  return t_KEY(input - offs, result, allocator);
+}
+
+inline uint32_t try_keyword_NAN(const char_t * const input, const uint32_t offs, Terminal * const result,
+                                const Allocator * const allocator) {
+  const char *pText = input;
+  constexpr bool negative = false;
+  try_special_number(offs, "NAN", XCONF_VAL_F32, 4, NAN);
+  return t_KEY(input - offs, result, allocator);
+}
+
+inline uint32_t tokenize_letter_n(const char_t * const input, Terminal * const result,
+                                  const Allocator * const allocator) {
+  if (*input == 'u') { return try_keyword_null(input + 1, 2, result, allocator); }
+  if (*input == 'a') { return try_keyword_nan(input + 1, 2, result, allocator); }
+  return t_KEY(input - 1, result, allocator);
+}
+
+inline uint32_t tokenize_letter_N(const char_t * const input, Terminal * const result,
+                                  const Allocator * const allocator) {
+  if (*input == 'u') { return try_keyword_NULL(input + 1, 2, result, allocator); }
+  if (*input == 'a' || *input == 'A') { return try_keyword_NAN(input + 1, 2, result, allocator); }
+  return t_KEY(input - 1, result, allocator);
+}
+
+
 // ${pred}.*${succ}
-uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,
-                       const char_t *const succ, const uint32_t n_succ,
-                       Terminal *const result, const Allocator *const allocator) {
+inline uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,
+                              const char_t *const succ, const uint32_t n_succ,
+                              Terminal *const result, const Allocator *const allocator) {
   const char_t *pText = input;
   while (*pText) {
     if (*pText == '\\') {
@@ -534,14 +626,17 @@ uint32_t single_tokenize(const char_t * const input, Terminal * const result,
   length = tokenize_single_symbol(input, result, allocator);
   if (length > 0) { return length; }
   switch (*input) {
+    case 'i': { return try_keyword_inf(input + 1, 1, result, allocator); }
+    case 'I': { return try_keyword_INF(input + 1, 1, result, allocator); }
     case 'f': { return try_keyword_false(input + 1, 1, result, allocator); }
     case 'F': { return try_keyword_FALSE(input + 1, 1, result, allocator); }
     case 't': { return try_keyword_true(input + 1, 1, result, allocator); }
     case 'T': { return try_keyword_TRUE(input + 1, 1, result, allocator); }
-    case 'n': { return try_keyword_null(input + 1, 1, result, allocator); }
-    case 'N': { return try_keyword_NULL(input + 1, 1, result, allocator); }
+    case 'n': { return tokenize_letter_n(input + 1, result, allocator); }
+    case 'N': { return tokenize_letter_N(input + 1, result, allocator); }
     case '"': { return tokenize_text(input + 1, 1, "\"", 1, result, allocator); }
     case '\'': { return tokenize_text(input + 1, 1, "\'", 1, result, allocator); }
+    default: ;
   }
   length = t_KEY(input, result, allocator);
   if (length > 0) { return length; }
