@@ -495,7 +495,6 @@ inline uint32_t try_keyword_INF(const char_t * const input, const uint32_t offs,
   return t_KEY(input - offs, result, allocator);
 }
 
-
 inline uint32_t try_keyword_nan(const char_t * const input, const uint32_t offs, Terminal * const result,
                                 const Allocator * const allocator) {
   const char *pText = input;
@@ -525,7 +524,6 @@ inline uint32_t tokenize_letter_N(const char_t * const input, Terminal * const r
   if (*input == 'a' || *input == 'A') { return try_keyword_NAN(input + 1, 2, result, allocator); }
   return t_KEY(input - 1, result, allocator);
 }
-
 
 // ${pred}.*${succ}
 inline uint32_t tokenize_text(const char_t *const input, const uint32_t n_pred,

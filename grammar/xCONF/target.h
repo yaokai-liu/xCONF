@@ -31,6 +31,7 @@
 #include "array.h"
 #include "dict.h"
 #include "token.h"
+#include "meman-utils.h"
 #include "xCONF/xCONF.h"
 
 typedef Array List; // Array<REFER(Value)>

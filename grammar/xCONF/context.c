@@ -26,13 +26,14 @@
  **/
 
 #include "context.h"
+#include "meman-utils.h"
 #include "generated/xCONF/action-table.gen.h"
 
 XCONFContext *XCONFContext_new(const Allocator *allocator) {
   XCONFContext *context = allocator->calloc(1, sizeof(XCONFContext));
 
   context->allocator = allocator;
-  context->key_trie = Trie_new(sizeof(char_t), char2u64, allocator);
+  context->key_trie = Trie_new(sizeof(char_t), (key_t *) char2u64, allocator);
   context->key_array = Array_new(sizeof(char_t),XCONF_KEY_ARRAY, allocator);
   context->text_array = Array_new(sizeof(char_t), XCONF_TEXT_ARRAY, allocator);
   context->value_array = Array_new(sizeof(Value), XCONF_VALUE_ARRAY, allocator);
@@ -71,18 +72,14 @@ void XCONFContext_state_action(XCONFContext *context, uint32_t state, Token *, c
   switch (state) {
     case XCONF_state_LEFT_BRACKET:
     case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_BRACKET:
-    // case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_BRACKET:
     case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
-    // case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
     {
       XCONFContext_enter(context, Object_new(context->allocator));
       break;
     }
     case XCONF_state_Object:
     case XCONF_state_LEFT_BRACKET_Path_COLON_Object:
-    // case XCONF_state_LEFT_BRACKET_Path_ASSIGN_Object:
     case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_Object:
-    // case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_Object:
     {
       XCONFContext_exit(context);
       break;
