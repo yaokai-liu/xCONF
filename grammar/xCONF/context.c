@@ -72,14 +72,14 @@ void XCONFContext_state_action(XCONFContext *context, uint32_t state, Token *, c
   switch (state) {
     case XCONF_state_LEFT_BRACKET:
     case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_BRACKET:
-    case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
+    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_LEFT_BRACKET:
     {
       XCONFContext_enter(context, Object_new(context->allocator));
       break;
     }
     case XCONF_state_Object:
     case XCONF_state_LEFT_BRACKET_Path_COLON_Object:
-    case XCONF_state_LEFT_BRACKET_Path_COLON_LEFT_SQUARE_BRACKET_Object:
+    case XCONF_state_LEFT_BRACKET_Path_ASSIGN_LEFT_SQUARE_BRACKET_Object:
     {
       XCONFContext_exit(context);
       break;

@@ -121,9 +121,10 @@ uint32_t writeList(FILE *file, List *list, uint32_t indent, XCONFContext *contex
 }
 
 uint32_t writeObject(FILE *file, Object *object, uint32_t indent, XCONFContext *context) {
+  const uint32_t n_pairs = Dict_count(object);
+  if (n_pairs == 0) { fputs("{}", file); return XCONF_SUCCESS; }
   fputs("{\n", file);
   const Pair *pairs = Dict_elements(object);
-  const uint32_t n_pairs = Dict_count(object);
   for (uint32_t i = 0; i < n_pairs; i++) {
     char *key = Array_virt2real(context->key_array, pairs[i].key);
     for (uint32_t j = 0; j < indent + 1; j++) { fprintf(file, "  "); }

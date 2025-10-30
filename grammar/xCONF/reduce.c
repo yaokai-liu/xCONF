@@ -165,6 +165,10 @@ Pairs * XCONF_Pairs_1 (Token [], XCONFContext *, ErrInfo *, const Allocator *) {
   return (Pairs *) XCONF_TOKEN_Pairs;
 }
 
+Pairs * XCONF_Pairs_2 (Token [], XCONFContext *, ErrInfo *, const Allocator *) {
+  return (Pairs *) XCONF_TOKEN_Pairs;
+}
+
 Path * XCONF_Path_0 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
   Path *path = args[0].value;
   REFER(char_t) key = args[2].value;
@@ -362,6 +366,10 @@ Values * XCONF_Values_1 (Token args[], XCONFContext *, ErrInfo *, const Allocato
   Array_append(values, &value, 1);
 
   return values;
+}
+
+Values * XCONF_Values_2 (Token [], XCONFContext *, ErrInfo *, const Allocator *allocator) {
+  return Array_new(sizeof(REFER(Value)), XCONF_TOKEN_Value, allocator);
 }
 
 inline void fill_error_info(ErrInfo *errInfo, const Token *start, const Token *end) {
