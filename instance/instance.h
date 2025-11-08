@@ -18,38 +18,28 @@
  *
  *
  * Project Name: xCONF
- * Module Name: grammar
- * Filename: error.h
+ * Module Name: instance
+ * Filename: instance.h
  * Creator: Yaokai Liu
- * Create Date: 2025-09-03
+ * Create Date: 2025-11-04
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XCONF_GRAMMAR_ERROR_INFO_H
-#define XCONF_GRAMMAR_ERROR_INFO_H
+#ifndef XCONF_INSTANCE_H
+#define XCONF_INSTANCE_H
 
-#include <stdint.h>
+
 #include "xCONF/xCONF.h"
+#include "tokenize/tokenizer.h"
+#include "xCONF/context.h"
 
-typedef struct ErrInfo {
-  Location start, end;
-  /**
-   * @description error code
-   */
-  enum XCONF_ERROR_CODE_ENUM code;
-  /**
-   * @description error code
-   */
-  uint32_t info;
-  /**
-   * @description   file that error occurs
-   */
-  const char * file;
-  /**
-   * @description   the token type
-   */
-  uint32_t token;
-} ErrInfo;
+typedef struct XCONFInstance {
+  const Allocator *allocator;
+  Trie *key_trie;
+  Array *key_array;
+  XCONFTokenizer *tokenizer;
+  XCONFContext *context;
+  ErrInfo errInfo;
+} XCONFInstance;
 
-
-#endif //XCONF_GRAMMAR_ERROR_INFO_H
+#endif //XCONF_INSTANCE_H

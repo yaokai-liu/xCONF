@@ -132,7 +132,7 @@ include_directories(include)
 
 file(GLOB_RECURSE XCONF_GRAMMAR_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} grammar/*.c grammar/*.h)
 add_library(${TARGET_PREFIX}grammar STATIC ${XCONF_GRAMMAR_SRC} ${XCONF_UTILS_SRC})
-target_include_directories(${TARGET_PREFIX}grammar PRIVATE grammar)
+target_include_directories(${TARGET_PREFIX}grammar PRIVATE instance grammar)
 target_link_libraries(${TARGET_PREFIX}grammar PRIVATE m)
 
 aux_source_directory(compose XCONF_COMPOSE_SRC)
@@ -140,8 +140,8 @@ add_library(${TARGET_PREFIX}compose STATIC ${XCONF_COMPOSE_SRC})
 target_link_libraries(${TARGET_PREFIX}compose PRIVATE ${TARGET_PREFIX}grammar)
 target_include_directories(${TARGET_PREFIX}compose PRIVATE grammar)
 
-aux_source_directory(interface XCONF_INTERFACE_SRC)
-add_library(xCONF STATIC ${XCONF_INTERFACE_SRC})
+aux_source_directory(instance XCONF_INSTANCE_SRC)
+add_library(xCONF STATIC ${XCONF_INSTANCE_SRC})
 target_link_libraries(xCONF PRIVATE ${TARGET_PREFIX}grammar ${TARGET_PREFIX}compose)
 target_include_directories(xCONF PRIVATE grammar compose)
 

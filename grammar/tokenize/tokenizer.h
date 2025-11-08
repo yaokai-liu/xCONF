@@ -36,9 +36,9 @@
 
 typedef struct XCONFTokenizer XCONFTokenizer;
 
-XCONFTokenizer *XCONFTokenizer_new(const char_t *src, Array *ident_array, Trie *ident_trie, const Allocator *allocator);
-
-void XCONFTokenizer_setSrc(XCONFTokenizer *tokenizer, const char_t *src);
+XCONFTokenizer *XCONFTokenizer_new(const XCONFInstance *instance, const Allocator *allocator);
+void XCONFTokenizer_enter(XCONFTokenizer *tokenizer, const char_t *src);
+void XCONFTokenizer_exit(XCONFTokenizer *tokenizer);
 void XCONFTokenizer_concatSrc(XCONFTokenizer *tokenizer, const char_t *src);
 
 uint32_t

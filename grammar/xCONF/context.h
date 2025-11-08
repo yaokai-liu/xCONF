@@ -33,40 +33,33 @@
 #include "target.h"
 #include "stack.h"
 #include "error_info.h"
-
-enum XCONF_PATH_ACTION_TYPE {
-  XCONF_PATH_ACTION_UNSET,
-  XCONF_PATH_ACTION_BUILD,
-  XCONF_PATH_ACTION_ACCESS,
-};
-
-enum XCONF_CONTEXT_ARRAY_AND_DICT_ID {
-  XCONF_KEY_ARRAY = 1,
-  XCONF_TEXT_ARRAY = 2,
-  XCONF_VALUE_ARRAY = 3,
-  XCONF_PAIR_ARRAY = 4,
-  XCONF_REFER_VALUE_ARRAY = 5,
-  XCONF_OBJECT_ID = 6,
-};
+#include "enum.h"
 
 typedef struct XCONFContext {
   const Allocator *allocator;
-  Trie    *key_trie;      // Trie<char_t, REFER(char_t)>
-  Array   *key_array;     // Array<char_t>
+  XCONFInstance *instance;
+  Trie      *key_trie;  // Trie<char_t, REFER(char_t)>
+  Array     *key_array; // Array<char_t>
+
   Array   *text_array;    // Array<char_t>
   Array   *value_array;   // Array<Value>
-  Stack   *obj_stack;     // Stack<Object>
+  Stack   *obj_stack;     // Stack<Object *>
   Object  *object;
   uint32_t path_action;
+  bool     parsing_refer;
 } XCONFContext;
 
-XCONFContext *XCONFContext_new(const Allocator *allocator);
+#define UNINITIALIZED_VAL_INDEX (0)
+#define UNINITIALIZED_VAL_REFER ((REFER(Value)) ((((uint64_t) XCONF_VALUE_ARRAY) << 32) | UNINITIALIZED_VAL_INDEX))
+
+XCONFContext *XCONFContext_new(XCONFInstance *instance, const Allocator *allocator);
 void XCONFContext_destroy(XCONFContext *context);
 
 void XCONFContext_state_action(XCONFContext *context, uint32_t state, Token *, const Allocator *allocator);
 
 void XCONFContext_enter(XCONFContext *context, Object *object);
 void XCONFContext_exit(XCONFContext *context);
+void XCONFContext_reset(XCONFContext *context);
 void XCONFContext_clear(XCONFContext *context);
 
 REFER(char_t) XCONFContext_new_text_content(XCONFContext *context, const char_t *text_content, uint32_t size);
@@ -74,5 +67,9 @@ REFER(char_t) XCONFContext_new_text_content(XCONFContext *context, const char_t 
 #define XCONFContent_add_text_content(context, text_content, size) \
                          Array_append((context)->text_array, (text_content), (size))
 
+uint32_t XCONFContext_buildObjectRefer(const XCONFContext *context, Object *object, ErrInfo *errInfo);
+
+uint32_t XCONFContext_buildListRefer(const XCONFContext *context, const List *list, ErrInfo *errInfo);
+REFER(Value) XCONFContext_getReferValue(const XCONFContext *context, const ReferArray *refer_array, ErrInfo *errInfo);
 
 #endif //XCONF_GRAMMAR_XCONF_CONTEXT_H

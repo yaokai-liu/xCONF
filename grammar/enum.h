@@ -18,38 +18,50 @@
  *
  *
  * Project Name: xCONF
- * Module Name: grammar
- * Filename: error.h
+ * Module Name: grammar/xCONF
+ * Filename: enum.h
  * Creator: Yaokai Liu
- * Create Date: 2025-09-03
+ * Create Date: 2025-11-03
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef XCONF_GRAMMAR_ERROR_INFO_H
-#define XCONF_GRAMMAR_ERROR_INFO_H
+#ifndef XCONF_ENUM_H
+#define XCONF_ENUM_H
 
-#include <stdint.h>
-#include "xCONF/xCONF.h"
+enum XCONF_UPDATE_METHOD_ENUM: uint32_t {
+  XCONF_UM_UPDATE,
+  XCONF_UM_APPEND,
+  XCONF_UM_REMOVE,
+};
 
-typedef struct ErrInfo {
-  Location start, end;
-  /**
-   * @description error code
-   */
-  enum XCONF_ERROR_CODE_ENUM code;
-  /**
-   * @description error code
-   */
-  uint32_t info;
-  /**
-   * @description   file that error occurs
-   */
-  const char * file;
-  /**
-   * @description   the token type
-   */
-  uint32_t token;
-} ErrInfo;
+enum XCONF_PATH_ACTION_TYPE: uint32_t {
+  XCONF_PATH_ACTION_UNSET,
+  XCONF_PATH_ACTION_BUILD,
+  XCONF_PATH_ACTION_ACCESS,
+};
 
+enum XCONF_CONTEXT_ARRAY_AND_DICT_ID: uint32_t {
+  XCONF_KEY_ARRAY = 1,
+  XCONF_TEXT_ARRAY = 2,
+  XCONF_VALUE_ARRAY = 3,
+  XCONF_PAIR_ARRAY = 4,
+  XCONF_REFER_ARRAY = 5,
+  XCONF_REFER_VALUE_ARRAY = 5,
+  XCONF_OBJECT_ID = 6,
+};
 
-#endif //XCONF_GRAMMAR_ERROR_INFO_H
+enum XCONF_VALUE_CATEGORY_ENUM: uint32_t {
+  XCONF_VAL_CAT_NULL,
+  XCONF_VAL_CAT_LIST,
+  XCONF_VAL_CAT_TEXT,
+  XCONF_VAL_CAT_OBJECT,
+  XCONF_VAL_CAT_BOOLEAN,
+
+  XCONF_VAL_CAT_INT,
+  XCONF_VAL_CAT_UINT,
+  XCONF_VAL_CAT_FLOAT,
+
+  XCONF_VAL_CAT_UNINITIALIZED = UINT32_MAX,
+};
+
+#endif //XCONF_ENUM_H

@@ -27,6 +27,7 @@
 
 #include "tokenize.h"
 #include "xCONF/target.h"
+#include "enum.h"
 #include "string_t.h"
 #include "token.h"
 #include "generated/tokens.gen.h"
@@ -37,40 +38,51 @@
 #define max(a, b)          ((a) > (b) ? (a) : (b))
 #define min(a, b)          ((a) < (b) ? (a) : (b))
 
-static uint32_t t_KEY(const char_t *input, Terminal *result, const Allocator *allocator);
-static uint32_t t_NUMBER(const char_t *input, Terminal *result, bool negative ,
+uint32_t t_KEY(const char_t *input, Terminal *result, const Allocator *allocator);
+uint32_t t_NUMBER(const char_t *input, Terminal *result, bool negative ,
                          uint32_t adic, const Allocator *allocator);
-static uint32_t t_INT_DIGITS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_INT_DIGITS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_INT_DIGITS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_INT_DIGITS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_FRAC_DIGITS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_FRAC_DIGITS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_FRAC_DIGITS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
-static uint32_t t_FRAC_DIGITS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+uint32_t t_INT_DIGITS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
+uint32_t t_INT_DIGITS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
+uint32_t t_INT_DIGITS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+uint32_t t_INT_DIGITS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+uint32_t t_FRAC_DIGITS_adic16(const char_t *input, uint32_t *effective_length, uint256_t *value);
+uint32_t t_FRAC_DIGITS_adic10(const char_t *input, uint32_t *effective_length, uint256_t *value);
+uint32_t t_FRAC_DIGITS_adic8 (const char_t *input, uint32_t *effective_length, uint256_t *value);
+uint32_t t_FRAC_DIGITS_adic2 (const char_t *input, uint32_t *effective_length, uint256_t *value);
 
-static uint32_t try_keyword_FALSE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
-static uint32_t try_keyword_NULL(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
-static uint32_t try_keyword_TRUE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
-static uint32_t try_keyword_false(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
-static uint32_t try_keyword_null(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
-static uint32_t try_keyword_true(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_from(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_FROM(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_update(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_append(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_remove(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_UPDATE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_APPEND(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_REMOVE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 
-static uint32_t try_keyword_inf(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
-static uint32_t try_keyword_INF(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
-static uint32_t try_keyword_nan(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
-static uint32_t try_keyword_NAN(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_FALSE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_NULL(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_TRUE(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_false(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_null(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_true(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 
-static uint32_t tokenize_letter_n(const char_t * input, Terminal * result, const Allocator * allocator);
-static uint32_t tokenize_letter_N(const char_t * input, Terminal * result, const Allocator * allocator);
+uint32_t try_keyword_inf(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_INF(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_nan(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
+uint32_t try_keyword_NAN(const char_t *input, uint32_t offs, Terminal *result, const Allocator *allocator);
 
-static uint32_t tokenize_single_symbol(const char_t *input, Terminal *result, const Allocator *allocator);
-static uint32_t tokenize_number(const char_t *input, Terminal *result, const Allocator *allocator);
-static uint32_t tokenize_text(const char_t *input, uint32_t n_pred,
+uint32_t tokenize_letter_f(const char_t * input, Terminal * result, const Allocator * allocator);
+uint32_t tokenize_letter_F(const char_t * input, Terminal * result, const Allocator * allocator);
+uint32_t tokenize_letter_n(const char_t * input, Terminal * result, const Allocator * allocator);
+uint32_t tokenize_letter_N(const char_t * input, Terminal * result, const Allocator * allocator);
+
+uint32_t tokenize_single_symbol(const char_t *input, Terminal *result, const Allocator *allocator);
+uint32_t tokenize_number(const char_t *input, Terminal *result, const Allocator *allocator);
+uint32_t tokenize_text(const char_t *input, uint32_t n_pred,
                               const char_t *succ, uint32_t n_succ,
                               Terminal *result, const Allocator *allocator);
 
-static uint32_t try_pass_comment(const char *input, uint32_t *lineno, uint32_t *column);
+uint32_t try_pass_comment(const char *input, uint32_t *lineno, uint32_t *column);
 
 #define isSign(pText)             ((*pText == '-') || (*pText == '+'))
 #define isKeyHeader(pText)        (startswithLetter(pText) || (*pText == '_'))
@@ -271,13 +283,13 @@ inline uint32_t t_FRAC_DIGITS_adic2(const char_t *const input, uint32_t *effecti
 #define FRAC_DIGITAL_FUNC     1
 
 typedef uint32_t tokenize_t(const char_t *, uint32_t *, uint256_t *);
-static tokenize_t *const DIGITAL_FUNC_TOOLS[4][2] = {
+tokenize_t *const DIGITAL_FUNC_TOOLS[4][2] = {
     [ADIC_TYPE_16] = { [INT_DIGITAL_FUNC] = t_INT_DIGITS_adic16, [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITS_adic16},
     [ADIC_TYPE_10] = { [INT_DIGITAL_FUNC] = t_INT_DIGITS_adic10, [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITS_adic10},
     [ADIC_TYPE_8 ] = { [INT_DIGITAL_FUNC] = t_INT_DIGITS_adic8 , [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITS_adic8 },
     [ADIC_TYPE_2 ] = { [INT_DIGITAL_FUNC] = t_INT_DIGITS_adic2 , [FRAC_DIGITAL_FUNC] = t_FRAC_DIGITS_adic2 },
 };
-static const uint32_t ADIC_BASE[] = {
+const uint32_t ADIC_BASE[] = {
     [ADIC_TYPE_16] = 16,
     [ADIC_TYPE_10] = 10,
     [ADIC_TYPE_8 ] = 8,
@@ -511,6 +523,20 @@ inline uint32_t try_keyword_NAN(const char_t * const input, const uint32_t offs,
   return t_KEY(input - offs, result, allocator);
 }
 
+inline uint32_t tokenize_letter_f(const char_t * const input, Terminal * const result,
+                                  const Allocator * const allocator) {
+  if (*input == 'r') { return try_keyword_from(input + 1, 2, result, allocator); }
+  if (*input == 'a') { return try_keyword_false(input + 1, 2, result, allocator); }
+  return t_KEY(input - 1, result, allocator);
+}
+
+inline uint32_t tokenize_letter_F(const char_t * const input, Terminal * const result,
+                                  const Allocator * const allocator) {
+  if (*input == 'R') { return try_keyword_FROM(input + 1, 2, result, allocator); }
+  if (*input == 'A') { return try_keyword_FALSE(input + 1, 2, result, allocator); }
+  return t_KEY(input - 1, result, allocator);
+}
+
 inline uint32_t tokenize_letter_n(const char_t * const input, Terminal * const result,
                                   const Allocator * const allocator) {
   if (*input == 'u') { return try_keyword_null(input + 1, 2, result, allocator); }
@@ -584,21 +610,33 @@ fn_try_keyword_val(null, NULL, 0)
 fn_try_keyword_val(FALSE, BOOLEAN, 0)
 fn_try_keyword_val(TRUE, BOOLEAN, 1)
 fn_try_keyword_val(NULL, NULL, 0)
+fn_try_keyword_val(from, FROM, 0)
+fn_try_keyword_val(FROM, FROM, 0)
+fn_try_keyword_val(update, UPDATE_METHOD, XCONF_UM_UPDATE)
+fn_try_keyword_val(append, UPDATE_METHOD, XCONF_UM_APPEND)
+fn_try_keyword_val(remove, UPDATE_METHOD, XCONF_UM_REMOVE)
+fn_try_keyword_val(UPDATE, UPDATE_METHOD, XCONF_UM_UPDATE)
+fn_try_keyword_val(APPEND, UPDATE_METHOD, XCONF_UM_APPEND)
+fn_try_keyword_val(REMOVE, UPDATE_METHOD, XCONF_UM_REMOVE)
 
 constexpr uint32_t TERMINAL_TYPE_LITERALS[] = {
+  XCONF_TOKEN_AT,
   XCONF_TOKEN_DOT,
   XCONF_TOKEN_COMMA,
   XCONF_TOKEN_COLON,
   XCONF_TOKEN_ASSIGN,
+  XCONF_TOKEN_OCTOTHORP,
 
   XCONF_TOKEN_LEFT_BRACKET,
   XCONF_TOKEN_RIGHT_BRACKET,
+  XCONF_TOKEN_LEFT_PARENTHESES,
+  XCONF_TOKEN_RIGHT_PARENTHESES,
   XCONF_TOKEN_LEFT_SQUARE_BRACKET,
   XCONF_TOKEN_RIGHT_SQUARE_BRACKET,
 };
 uint32_t tokenize_single_symbol(const char_t * const input, Terminal * const result, const Allocator * const) {
-  constexpr char_t SINGLE_LITERAL[] = ".,:={}[]";
-  uint32_t length = stridx_o(*input, SINGLE_LITERAL);
+  constexpr char_t SINGLE_LITERAL[] = "@.,:=#{}()[]";
+  const uint32_t length = stridx_o(*input, SINGLE_LITERAL);
   if (length < lenof(SINGLE_LITERAL)) {
     result->type = TERMINAL_TYPE_LITERALS[length];
     result->value = nullptr;
@@ -608,8 +646,7 @@ uint32_t tokenize_single_symbol(const char_t * const input, Terminal * const res
   return 0;
 }
 
-uint32_t single_tokenize(const char_t * const input, Terminal * const result,
-                         const Allocator * const allocator) {
+uint32_t single_tokenize(const char_t * const input, Terminal * const result, const Allocator * const allocator) {
   if (!*input) {
     result->type = XCONF_TOKEN_TERMINATOR;
     result->value = nullptr;
@@ -624,14 +661,20 @@ uint32_t single_tokenize(const char_t * const input, Terminal * const result,
   length = tokenize_single_symbol(input, result, allocator);
   if (length > 0) { return length; }
   switch (*input) {
+    case 'a': { return try_keyword_append(input + 1, 1, result, allocator); }
+    case 'A': { return try_keyword_APPEND(input + 1, 1, result, allocator); }
     case 'i': { return try_keyword_inf(input + 1, 1, result, allocator); }
     case 'I': { return try_keyword_INF(input + 1, 1, result, allocator); }
-    case 'f': { return try_keyword_false(input + 1, 1, result, allocator); }
-    case 'F': { return try_keyword_FALSE(input + 1, 1, result, allocator); }
     case 't': { return try_keyword_true(input + 1, 1, result, allocator); }
     case 'T': { return try_keyword_TRUE(input + 1, 1, result, allocator); }
+    case 'f': { return tokenize_letter_f(input + 1, result, allocator); }
+    case 'F': { return tokenize_letter_F(input + 1, result, allocator); }
     case 'n': { return tokenize_letter_n(input + 1, result, allocator); }
     case 'N': { return tokenize_letter_N(input + 1, result, allocator); }
+    case 'r': { return try_keyword_remove(input + 1, 1, result, allocator); }
+    case 'R': { return try_keyword_REMOVE(input + 1, 1, result, allocator); }
+    case 'u': { return try_keyword_update(input + 1, 1, result, allocator); }
+    case 'U': { return try_keyword_UPDATE(input + 1, 1, result, allocator); }
     case '"': { return tokenize_text(input + 1, 1, "\"", 1, result, allocator); }
     case '\'': { return tokenize_text(input + 1, 1, "\'", 1, result, allocator); }
     default: ;

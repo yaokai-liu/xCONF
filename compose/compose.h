@@ -33,8 +33,13 @@
 #include "xCONF/target.h"
 #include "xCONF/context.h"
 
-uint32_t writeList(FILE *file, List *list, uint32_t indent, XCONFContext *context);
-uint32_t writeValue(FILE *file, Value *value, uint32_t indent, XCONFContext *context);
-uint32_t writeObject(FILE *file, Object *object, uint32_t indent, XCONFContext *context);
+uint32_t writeValue(FILE *file, const Value *value, REFER(const Value) v_parent, bool paired, uint32_t indent, XCONFContext *context);
 
+uint32_t writeList(FILE *file, const List *list, REFER(const Value) v_current, bool pathed, uint32_t indent,
+                   XCONFContext *context);
+
+uint32_t writeObject(FILE *file, Object *object, REFER(const Value) v_current, bool pathed, uint32_t indent,
+                     XCONFContext *context);
+uint32_t writeCompactPair(FILE *file, const REFER(Value) v_current, const REFER(Value) v_parent, uint32_t indent, XCONFContext *context);
+uint32_t writePath(FILE * file, const Value * value, XCONFContext * context);
 #endif //XCONF_COMPOSE_H

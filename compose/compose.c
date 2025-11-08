@@ -42,7 +42,9 @@ static void fprint_i128(FILE *file, const Value *value);
 static void fprint_u128(FILE *file, const Value *value);
 static void fprint_text(FILE *file, const Value *value, const XCONFContext *context);
 
-uint32_t writeValue(FILE *file, Value *value, uint32_t indent, XCONFContext *context) {
+uint32_t writeValue(FILE *file, const REFER(Value) v_value, REFER(const Value) v_parent,
+                    const bool paired, const uint32_t indent, XCONFContext *context) {
+  const Value *value = Array_virt2real(context->value_array, v_value);
   switch (value->type) {
     case XCONF_VAL_NULL: {
       fputs("NULL", file);
@@ -93,48 +95,78 @@ uint32_t writeValue(FILE *file, Value *value, uint32_t indent, XCONFContext *con
       return XCONF_SUCCESS;
     }
     case XCONF_VAL_LIST: {
-      return writeList(file, value->val.LIST, indent, context);
+      return paired ? writeCompactPair(file, v_value, v_parent, indent, context)
+                    : writeList(file, value->val.LIST, v_value, false, indent, context);
     }
     case XCONF_VAL_OBJECT: {
-      return writeObject(file, value->val.OBJECT, indent, context);
+      return paired ? writeCompactPair(file, v_value, v_parent, indent, context)
+                    : writeObject(file, value->val.OBJECT, v_value, false, indent, context);
+    }
+    case XCONF_VAL_LINKED: {
+      fputc('@', file);
+      const Value *refer = Array_virt2real(context->value_array, value->val.REFER);
+      return writePath(file, refer, context);
     }
     default: {
-      return XCONF_ERROR_DUMP_UNSUPPORTED_VALUE;
+      return XCONF_ERROR_WRITE_UNSUPPORTED_VALUE;
     }
   }
 }
 
-uint32_t writeList(FILE *file, List *list, uint32_t indent, XCONFContext *context) {
-  fputs("[\n", file);
+uint32_t writeList(FILE *file, const List *list, REFER(const Value) v_current, bool pathed, const uint32_t indent,
+                   XCONFContext *context) {
   uint32_t n_values = Array_length(list);
-  REFER(Value) *v_values = Array_first_real(list);
-  for (uint32_t i = 0; i < n_values; i++) {
-    Value *val = Array_virt2real(context->value_array, v_values[i]);
-    for (uint32_t j = 0; j < indent + 1; j++) { fprintf(file, "  "); }
-    uint32_t result = writeValue(file, val, indent + 1, context);
-    if (result != XCONF_SUCCESS) { return result; }
-    if (i < n_values - 1) { fputs(",\n", file); } else { fputs("\n", file); }
+  if (n_values == 0) { fputs("[]", file); return XCONF_SUCCESS; }
+  fputs("[\n", file);
+  if (pathed) {
+    const REFER(Value) *v_values = Array_first_real(list);
+    for (uint32_t i = 0; i < n_values; i++) {
+      uint32_t result = writeCompactPair(file, v_values[i], v_current, indent, context);
+      if (result != XCONF_SUCCESS) { return result; }
+      if (i < n_values - 1) { fputs(",\n", file); } else { fputs("\n", file); }
+    }
+  } else {
+    REFER(Value) *v_values = Array_first_real(list);
+    for (uint32_t i = 0; i < n_values; i++) {
+      for (uint32_t j = 0; j < indent + 2; j++) { fprintf(file, "  "); }
+      uint32_t result = writeValue(file, v_values[i], v_current, false, indent + 2, context);
+      if (result != XCONF_SUCCESS) { return result; }
+      if (i < n_values - 1) { fputs(",\n", file); } else { fputs("\n", file); }
+    }
+    for (uint32_t j = 0; j < indent; j++) { fprintf(file, "  "); }
   }
-  for (uint32_t j = 0; j < indent; j++) { fprintf(file, "  "); }
+
   fputs("]", file);
   return XCONF_SUCCESS;
 }
 
-uint32_t writeObject(FILE *file, Object *object, uint32_t indent, XCONFContext *context) {
-  const uint32_t n_pairs = Dict_count(object);
-  if (n_pairs == 0) { fputs("{}", file); return XCONF_SUCCESS; }
-  fputs("{\n", file);
-  const Pair *pairs = Dict_elements(object);
-  for (uint32_t i = 0; i < n_pairs; i++) {
-    char *key = Array_virt2real(context->key_array, pairs[i].key);
-    for (uint32_t j = 0; j < indent + 1; j++) { fprintf(file, "  "); }
-    fprintf(file, "%s: ", key);
-    Value *val = Array_virt2real(context->value_array, pairs[i].value);
-    const uint32_t result = writeValue(file, val, indent + 1, context);
-    if (result != XCONF_SUCCESS) { return result; }
-    if (i < n_pairs - 1) { fputs(",\n", file); } else { fputs("\n", file); }
+uint32_t writeObject(FILE *file, Object *object, REFER(const Value) v_current,
+                     const bool pathed, const uint32_t indent, XCONFContext *context) {
+    const uint32_t n_pairs = Dict_count(object);
+    if (n_pairs == 0) { fputs("{}", file); return XCONF_SUCCESS; }
+    fputs("{\n", file);
+
+  if (pathed) {
+    const REFER(Value) *v_values = Dict_elements(object);
+    for (uint32_t i = 0; i < n_pairs; i++) {
+      uint32_t result = writeCompactPair(file, v_values[i], v_current, indent, context);
+      if (result != XCONF_SUCCESS) { return result; }
+      if (i < n_pairs - 1) { fputs(",\n", file); } else { fputs("\n", file); }
+    }
+  } else {
+    const REFER(char_t) *v_keys = Dict_keys(object);
+    const REFER(Value) *v_values = Dict_elements(object);
+    for (uint32_t i = 0; i < n_pairs; i++) {
+      char *key = Array_virt2real(context->key_array, v_keys[i]);
+      for (uint32_t j = 0; j < indent + 2; j++) { fprintf(file, "  "); }
+      fprintf(file, "%s: ", key);
+      uint32_t result = writeValue(file, v_values[i], v_current, false, indent + 2, context);
+      if (result != XCONF_SUCCESS) { return result; }
+      if (i < n_pairs - 1) { fputs(",\n", file); } else { fputs("\n", file); }
+    }
+    for (uint32_t j = 0; j < indent; j++) { fprintf(file, "  "); }
+
   }
-  for (uint32_t j = 0; j < indent; j++) { fprintf(file, "  "); }
   fputs("}", file);
   return XCONF_SUCCESS;
 }
@@ -164,10 +196,57 @@ inline void fprint_u128(FILE *file, const Value *value) {
 
 inline void fprint_text(FILE *file, const Value *value, const XCONFContext *context) {
   const char *text = Array_virt2real(context->text_array, value->val.TEXT->content);
-  putc('"', file);
+  fputc('"', file);
   for (uint32_t i = 0; i < value->val.TEXT->size; i++) {
-    if (text[i] == '"') { putc('\\', file); }
-    putc(text[i], file);
+    if (text[i] == '"') { fputc('\\', file); }
+    fputc(text[i], file);
   }
-  putc('"', file);
+  fputc('"', file);
+}
+
+uint32_t writePath(FILE * file, const Value * value, XCONFContext * context) {
+  const Value *parent = Array_virt2real(context->value_array, value->path.parent);
+  if (parent) {
+    writePath(file, parent, context);
+    if (parent->type == XCONF_VAL_OBJECT) {
+      fputc('.', file);
+      const char *key = Array_virt2real(context->key_array, value->path.key);
+      fputs(key, file);
+    } else if (parent->type == XCONF_VAL_LIST) {
+      const uint32_t index = (uint32_t) (uint64_t) value->path.key;
+      fprintf(file, "[%u]", index);
+    } else { return XCONF_ERROR_CONFLICT_KEY_TYPE; }
+  } else {
+    const char *key = Array_virt2real(context->key_array, value->path.key);
+    fputs(key, file);
+  }
+  return XCONF_SUCCESS;
+}
+
+uint32_t writeCompactPair(FILE *file, REFER(const Value) v_current, const REFER(Value) v_parent, const uint32_t indent, XCONFContext *context) {
+  const Value *current = Array_virt2real(context->value_array, v_current);
+  if (current->type == XCONF_VAL_OBJECT) {
+    const uint32_t n_values = Dict_count(current->val.OBJECT);
+    const REFER(Value) *v_values = Dict_elements(current->val.OBJECT);
+    for (uint32_t i = 0; i < n_values; i++) {
+      uint32_t result = writeCompactPair(file, v_values[i], v_current, indent, context);
+      if (result != XCONF_SUCCESS) { return result; }
+      if (i < n_values - 1) { fputs(",\n", file); }
+    }
+  } else if (current->type == XCONF_VAL_LIST) {
+    const uint32_t n_values = Array_length(current->val.LIST);
+    const REFER(Value) *v_values = Array_first_real(current->val.LIST);
+    for (uint32_t i = 0; i < n_values; i++) {
+      uint32_t result = writeCompactPair(file, v_values[i], v_current, indent, context);
+      if (result != XCONF_SUCCESS) { return result; }
+      if (i < n_values - 1) { fputs(",\n", file); }
+    }
+  } else {
+    for (uint32_t j = 0; j < indent; j++) { fprintf(file, "  "); }
+    writePath(file, current, context);
+    fputs(" = ", file);
+    uint32_t result = writeValue(file, v_current, v_parent, true, indent, context);
+    if (result != XCONF_SUCCESS) { return result; }
+  }
+  return XCONF_SUCCESS;
 }

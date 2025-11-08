@@ -30,189 +30,147 @@
 
 static void fill_error_info(ErrInfo *errInfo, const Token *start, const Token *end);
 
-Path * XCONF_PATH_Path_0 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator * allocator) {
+
+Path * XCONF_PATH_Path_0 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
   Path *path = args[0].value;
   REFER(char_t) key = args[2].value;
 
-  if (context->path_action == XCONF_PATH_ACTION_BUILD) {
-    if (!path->value) {
-      const Value val = { .type = XCONF_VAL_OBJECT, .size = 0, .val.OBJECT = Object_new(allocator) };
-      Array_append(context->value_array, &val, 1);
-      path->value = Array_last_virt(context->value_array);
+  const Value *path_value = nullptr;
+  if (!path->parent) {
+    const REFER(Value) v_val = *(const REFER(Value) *)Dict_get(context->object, &path->key);
+    if (v_val) { path_value = Array_virt2real(context->value_array, v_val); }
+  } else {
+    const Value *parent = Array_virt2real(context->value_array, path->parent);
+    if (parent->type == XCONF_VAL_OBJECT) {
+      const REFER(Value) v_val = *(const REFER(Value) *)Dict_get(parent->val.OBJECT, &path->key);
+      if (v_val) { path_value = Array_virt2real(context->value_array, v_val); }
+    } else if (parent->type == XCONF_VAL_LIST) {
+      const REFER(Value) *p_v_val = Array_virt2real(parent->val.LIST, path->key);
+      if (p_v_val) { path_value = Array_virt2real(context->value_array, *p_v_val); }
     }
-    if (!Array_virt2real(context->key_array, path->key)) {
-      List *list = (List *) path->key;
-      uint32_t n_vals = Array_length(list);
-      REFER(Value) *vals = Array_first_real(list);
-      for (uint32_t i = 0; i < n_vals; i++) {
-        if (vals[i] == path->value) { goto __has_value; }
-      }
-      Array_append(list, &path->value, 1);
-      __has_value:
-    }
-    Value *value = Array_virt2real(context->value_array, path->value);
-    if (value->type != XCONF_VAL_OBJECT) {
-      errInfo->code = XCONF_ERROR_CONFLICT_KEY;
-      fill_error_info(errInfo, &args[0], &args[0]);
-      return nullptr;
-    }
-    Object *object = value->val.OBJECT;
-    Pair *pair = Dict_get(object, &key);
-    if (!pair) { Dict_set(object, &key, &(Pair){.key = key, .value = nullptr}); }
-
-    if (!Array_virt2real(context->key_array, path->key)) { allocator->free(path); }
-
-    return Dict_get(object, &key);
-  }
-  if (context->path_action == XCONF_PATH_ACTION_ACCESS) {
-    if (!path->value) {
-      errInfo->code = XCONF_ERROR_FIELD_UNDEFINED;
-      fill_error_info(errInfo, &args[0], &args[0]);
-      return nullptr;
-    }
-    const Value *value = Array_virt2real(context->value_array, path->value);
-    if (!value) {
-      errInfo->code = XCONF_ERROR_FIELD_UNDEFINED;
-      fill_error_info(errInfo, &args[0], &args[0]);
-      return nullptr;
-    }
-    if (value->type != XCONF_VAL_OBJECT) {
-      errInfo->code = XCONF_ERROR_CONFLICT_KEY;
-      fill_error_info(errInfo, &args[0], &args[0]);
-      return nullptr;
-    }
-    Object *object = value->val.OBJECT;
-    Pair *pair = Dict_get(object, &key);
-    if (!pair) {
-      errInfo->code = XCONF_ERROR_NO_SUCH_KEY;
-      fill_error_info(errInfo, &args[2], &args[2]);
-      return nullptr;
-    }
-    return pair;
   }
 
-  errInfo->code = XCONF_ERROR_INVALID_PATH_ACTION;
-  return nullptr;
+  if (path_value) {
+    if (path_value->type != XCONF_VAL_OBJECT) {
+      errInfo->code = XCONF_ERROR_CONFLICT_KEY_TYPE;
+      fill_error_info(errInfo, &args[0], &args[2]);
+      return nullptr;
+    }
+    REFER(Value) v_val = Array_last_virt(context->value_array);
+    path->parent = v_val;
+    path->key = key;
+    return path;
+  }
+
+  if (context->path_action != XCONF_PATH_ACTION_BUILD) {
+    errInfo->code = XCONF_ERROR_FIELD_UNDEFINED;
+    fill_error_info(errInfo, &args[0], &args[0]);
+    return nullptr;
+  }
+
+  const Value value = {.type = XCONF_VAL_OBJECT, .size = 0, .path = *path, .val.OBJECT = Object_new(allocator)};
+  Array_append(context->value_array, &value, 1);
+  REFER(Value) v_val = Array_last_virt(context->value_array);
+  if (!path->parent) {
+    Dict_set(context->object, &path->key, &v_val);
+  } else {
+    const Value *parent = Array_virt2real(context->value_array, path->parent);
+    if (parent->type == XCONF_VAL_OBJECT) { Dict_set(parent->val.OBJECT, &path->key, &v_val); }
+    else if (parent->type == XCONF_VAL_LIST) { Array_append(parent->val.LIST, &v_val, 1); }
+  }
+  path->parent = v_val;
+  path->key = key;
+  return path;
 }
 
 Path * XCONF_PATH_Path_1 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *allocator) {
   Path *path = args[0].value;
   Value *number = args[2].value;
 
-  if (context->path_action == XCONF_PATH_ACTION_BUILD) {
-    if (!path->value) {
-      List *list = Array_new(sizeof(REFER(Value)), XCONF_REFER_VALUE_ARRAY, allocator);
-      const Value val = { .type = XCONF_VAL_LIST, .size = 0, .val.LIST = list };
-      Array_append(context->value_array, &val, 1);
-      path->value = Array_last_virt(context->value_array);
+  if (number->type != XCONF_VAL_I32) {
+    errInfo->code = XCONF_ERROR_INDEX_OUT_OF_RANGE;
+    fill_error_info(errInfo, &args[2], &args[2]);
+    return nullptr;
+  }
+
+  const Value *path_value = nullptr;
+  if (!path->parent) {
+    const REFER(Value) v_val = *(const REFER(Value) *)Dict_get(context->object, &path->key);
+    if (v_val) { path_value = Array_virt2real(context->value_array, v_val); }
+  } else {
+    const Value *parent = Array_virt2real(context->value_array, path->parent);
+    if (parent->type == XCONF_VAL_OBJECT) {
+      const REFER(Value) v_val = *(const REFER(Value) *)Dict_get(parent->val.OBJECT, &path->key);
+      if (v_val) { path_value = Array_virt2real(context->value_array, v_val); }
+    } else if (parent->type == XCONF_VAL_LIST) {
+      const REFER(Value) *p_v_val = Array_virt2real(parent->val.LIST, path->key);
+      if (p_v_val) { path_value = Array_virt2real(context->value_array, *p_v_val); }
     }
-    Value *value = Array_virt2real(context->value_array, path->value);
-    if (value->type != XCONF_VAL_LIST) {
-      errInfo->code = XCONF_ERROR_CONFLICT_KEY;
-      fill_error_info(errInfo, &args[0], &args[0]);
+  }
+
+  if (path_value) {
+    if (path_value->type != XCONF_VAL_LIST) {
+      errInfo->code = XCONF_ERROR_CONFLICT_KEY_TYPE;
+      fill_error_info(errInfo, &args[0], &args[3]);
       return nullptr;
     }
-    List *list = value->val.LIST;
-    if (number->type != XCONF_VAL_I32) {
-      errInfo->code = XCONF_ERROR_INDEX_OUT_OF_RANGE;
-      fill_error_info(errInfo, &args[2], &args[2]);
-      return nullptr;
-    }
-    uint32_t index = number->val.I32;
+    const List *list = path_value->val.LIST;
+    const uint32_t index = number->val.I32;
+    allocator->free(number);
     if (index > Array_length(list)) {
       errInfo->code = XCONF_ERROR_INDEX_OUT_OF_RANGE;
       fill_error_info(errInfo, &args[2], &args[2]);
       return nullptr;
     }
-    REFER(Value) *v_value = Array_real_addr(list, index);
-
-    Pair *pair = allocator->calloc(1, sizeof(Pair));
-    pair->value = v_value ? *v_value : nullptr;
-    pair->key = (void *) list;
-    return pair;
-  }
-  if (context->path_action == XCONF_PATH_ACTION_ACCESS) {
-    if (!path->value) {
-      errInfo->code = XCONF_ERROR_FIELD_UNDEFINED;
-      fill_error_info(errInfo, &args[0], &args[0]);
-      return nullptr;
-    }
-    Value *value = Array_virt2real(context->value_array, path->value);
-    if (value->type != XCONF_VAL_LIST) {
-      errInfo->code = XCONF_ERROR_CONFLICT_KEY;
-      fill_error_info(errInfo, &args[0], &args[0]);
-      return nullptr;
-    }
-    const List *list = value->val.LIST;
-    if (number->type != XCONF_VAL_I32) {
-      errInfo->code = XCONF_ERROR_INDEX_OUT_OF_RANGE;
-      fill_error_info(errInfo, &args[2], &args[2]);
-      return nullptr;
-    }
-    uint32_t index = number->val.I32;
-    if (index >= Array_length(list)) {
-      errInfo->code = XCONF_ERROR_INDEX_OUT_OF_RANGE;
-      fill_error_info(errInfo, &args[2], &args[2]);
-      return nullptr;
-    }
-    REFER(Value) *v_value = Array_real_addr(list, index);
-
-    Pair *pair = allocator->calloc(1, sizeof(Pair));
-    pair->value = *v_value;
-    pair->key = nullptr;
-    return pair;
+    REFER(Value) v_val = Array_last_virt(context->value_array);
+    path->parent = v_val;
+    path->key = Array_virt_addr(list, index);
+    return path;
   }
 
-  errInfo->code = XCONF_ERROR_INVALID_PATH_ACTION;
-  return nullptr;
+  if (context->path_action != XCONF_PATH_ACTION_BUILD) {
+    errInfo->code = XCONF_ERROR_FIELD_UNDEFINED;
+    fill_error_info(errInfo, &args[0], &args[0]);
+    return nullptr;
+  }
+
+  const Value value = {.type = XCONF_VAL_LIST, .size = 0, .val.LIST = List_new(allocator)};
+  Array_append(context->value_array, &value, 1);
+  REFER(Value) v_val = Array_last_virt(context->value_array);
+  if (!path->parent) {
+    Dict_set(context->object, &path->key, &v_val);
+  } else {
+    const Value *parent = Array_virt2real(context->value_array, path->parent);
+    if (parent->type == XCONF_VAL_OBJECT) { Dict_set(parent->val.OBJECT, &path->key, &v_val); }
+    else if (parent->type == XCONF_VAL_LIST) { Array_append(parent->val.LIST, &v_val, 1); }
+  }
+  path = allocator->calloc(1, sizeof(Path));
+  path->parent = v_val;
+  path->key = Array_virt_addr(value.val.LIST, 0);
+  return path;
 }
 
-Path * XCONF_PATH_Path_2 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *) {
+Path * XCONF_PATH_Path_2 (Token args[], XCONFContext *, ErrInfo *, const Allocator *allocator) {
   REFER(char_t) key = args[1].value;
 
-  Object *object = context->object;
-  if (context->path_action == XCONF_PATH_ACTION_BUILD) {
-    Pair *pair = Dict_get(object, &key);
-    if (!pair) { Dict_set(object, &key, &(Pair){.key = key, .value = nullptr}); }
-    return Dict_get(object, &key);
-  }
-  if (context->path_action == XCONF_PATH_ACTION_ACCESS) {
-    Pair *pair = Dict_get(object, &key);
-    if (!pair) {
-      errInfo->code = XCONF_ERROR_NO_SUCH_KEY;
-      fill_error_info(errInfo, &args[1], &args[1]);
-      return nullptr;
-    }
-    return Dict_get(object, &key);
-  }
-  errInfo->code = XCONF_ERROR_INVALID_PATH_ACTION;
-  return nullptr;
+  Path *path = allocator->calloc(1, sizeof(Path));
+  path->parent = nullptr;
+  path->key = key;
+
+  return path;
 }
 
-Path * XCONF_PATH_Path_3 (Token args[], XCONFContext *context, ErrInfo *errInfo, const Allocator *) {
+Path * XCONF_PATH_Path_3 (Token args[], XCONFContext *, ErrInfo *, const Allocator *allocator) {
   REFER(char_t) key = args[0].value;
 
-  Object *object = context->object;
-  if (context->path_action == XCONF_PATH_ACTION_BUILD) {
-    Pair *pair = Dict_get(object, &key);
-    if (!pair) { Dict_set(object, &key, &(Pair){.key = key, .value = nullptr}); }
-    return Dict_get(object, &key);
-  }
-  if (context->path_action == XCONF_PATH_ACTION_ACCESS) {
-    Pair *pair = Dict_get(object, &key);
-    if (!pair) {
-      errInfo->code = XCONF_ERROR_NO_SUCH_KEY;
-      fill_error_info(errInfo, &args[0], &args[0]);
-      return nullptr;
-    }
-    return Dict_get(object, &key);
-  }
-  errInfo->code = XCONF_ERROR_INVALID_PATH_ACTION;
-  return nullptr;
+  Path *path = allocator->calloc(1, sizeof(Path));
+  path->parent = nullptr;
+  path->key = key;
+  return path;
 }
 
 Path * XCONF_PATH_Path_EXT (Token args[], XCONFContext *, ErrInfo *, const Allocator *) {
-    return args[0].value;
+  return args[0].value;
 }
 
 inline void fill_error_info(ErrInfo *errInfo, const Token *start, const Token *end) {

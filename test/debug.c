@@ -26,23 +26,35 @@
  **/
 
 #include <stdio.h>
+
+#include "meman-utils.h"
 #include "xCONF/xCONF.h"
 
+#define BUFFER_SIZE 1024
+
 int main () {
-  XCONF *conf = nullptr;
-  char buffer[512];
-  XCONF_init();
+  char buffer[BUFFER_SIZE];
+  const Allocator *allocator = &STDAllocator;
+  Trie *key_trie = Trie_new(sizeof(char), (key_t *) char2u64, allocator);
+  Array *key_array = Array_new(sizeof(char),1, allocator);
+  XCONFInstance *instance = XCONF_new(key_trie, key_array, allocator);
 
   // const char *string = "{data[0].a = 0x81363.4p238LL, data[1].b = 3.1415926535L, data[2].what[0].the.heil.is[0].that: ['I don\\'t know.']}";
   // if (XCONF_parse(string, &conf) != XCONF_SUCCESS) { XCONF_finish(); return -1; }
   // if (XCONF_compose(conf, buffer, 512) != XCONF_SUCCESS) { XCONF_finish(); return -2; }
   // printf("%s\n", buffer);
 
-  if (XCONF_load("test.xconf", &conf) != XCONF_SUCCESS) { XCONF_finish(); return -1; }
-  if (XCONF_compose(conf, buffer, 512) != XCONF_SUCCESS) { XCONF_finish(); return -2; }
+  XCONFObject *conf = nullptr;
+  enum XCONF_ERROR_CODE_ENUM result;
+  result = XCONF_load(instance, "test.xconf", &conf);
+  if (result != XCONF_SUCCESS) {
+    XCONF_destroy(instance); return -1;
+  }
+  result = XCONF_compose(instance, conf, true, buffer, BUFFER_SIZE);
+  if (result != XCONF_SUCCESS) { XCONF_destroy(instance); return -2; }
   printf("%s\n", buffer);
 
-  XCONF_destroy(conf);
-  XCONF_finish();
+  // XCONFObject_destroy(conf);
+  XCONF_destroy(instance);
   return 0;
 }

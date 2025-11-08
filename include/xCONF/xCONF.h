@@ -25,10 +25,13 @@
  * Copyright (c) 2025 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef __XCONF_H__
-#define __XCONF_H__
+#ifndef XCONF_H
+#define XCONF_H
 
 #include <stdint.h>
+
+#include "array.h"
+#include "trie.h"
 
 enum XCONF_VALUE_TYPE_ENUM: uint32_t {
   XCONF_VAL_NULL,
@@ -50,6 +53,8 @@ enum XCONF_VALUE_TYPE_ENUM: uint32_t {
   XCONF_VAL_F128,
   XCONF_VAL_F256,
 
+  XCONF_VAL_LINKAGE,
+  XCONF_VAL_LINKED,
   XCONF_VAL_UNINITIALIZED = UINT32_MAX,
 };
 
@@ -57,18 +62,21 @@ enum XCONF_ERROR_CODE_ENUM: uint32_t {
   XCONF_SUCCESS = 0,
 
   XCONF_ERROR_NO_SUCH_KEY,
-  XCONF_ERROR_CONFLICT_KEY,
+  XCONF_ERROR_CONFLICT_KEY_TYPE,
   XCONF_ERROR_FIELD_UNDEFINED,
   XCONF_ERROR_INDEX_OUT_OF_RANGE,
   XCONF_ERROR_UNRECOGNIZED_SYMBOL,
   XCONF_ERROR_UNEXPECTED_EOF,
+  XCONF_ERROR_UNEXPECTED_TOKEN,
   XCONF_ERROR_NO_SUCH_FILE,
+  XCONF_ERROR_NON_INDEXABLE_VALUE,
+  XCONF_ERROR_SELF_REFER,
 
+  XCONF_ERROR_FAILED_TO_IMPORT_CONFIG,
   XCONF_ERROR_INVALID_PATH_ACTION,
   XCONF_ERROR_CREATING_EXISTED,
   XCONF_ERROR_OVER_BUFFER_SIZE,
-  XCONF_ERROR_DUMP_UNSUPPORTED_VALUE,
-
+  XCONF_ERROR_WRITE_UNSUPPORTED_VALUE,
   XCONF_UNEXPECTED_TOKEN = UINT32_MAX,
 };
 
@@ -82,64 +90,65 @@ typedef double        float64_t;
 typedef long double   float128_t;
 typedef float128_t    float256_t; // optional: support for 256-bit float point number.
 
-typedef struct Array          XCONFList;
 typedef struct XCONFInstance  XCONFInstance;
-typedef struct Dict           XCONF, XCONFObject;
+typedef struct Dict           XCONFObject;
+typedef struct Array          XCONFList;
 
 /**
  * @description init the module
  * @return XCONF_SUCCESS
  */
-uint32_t XCONF_init();
+XCONFInstance *XCONF_new(Trie *key_trie, Array *key_array, const Allocator *allocator);
 
 /**
  * @description clean all involved data and environments except the key cache
  * @return XCONF_SUCCESS
  */
-uint32_t XCONF_reset();
+uint32_t XCONF_reset(const XCONFInstance *);
 
 /**
 * @description clean up the path environments of across configurations operations
  * @return XCONF_SUCCESS
  */
-uint32_t XCONF_clear();
+uint32_t XCONF_clear(const XCONFInstance *);
 
 /**
  * @description finish the module
  * @return XCONF_SUCCESS
  */
-uint32_t XCONF_finish();
+void XCONF_destroy(XCONFInstance *);
 
 /**
  * @description load configurations from a file
- * @param __filepath
- * @param __conf
+ * @param filepath
+ * @param conf
  * @returns
  *      XCONF_SUCCESS           if there's no error
  *      XCONF_ERROR_SUCH_FILE   if the __filepath refers no file
  *      or                      other parse errors
  */
-uint32_t XCONF_load(const char *__filepath, XCONF **__conf);
+uint32_t XCONF_load(XCONFInstance *, const char *filepath, XCONFObject **conf);
 /**
  * @description parse configurations from a string
- * @param __string
- * @param __conf
+ * @param string
+ * @param conf
  * @returns
  *      XCONF_SUCCESS           if there's no error
  *      or                      other parse errors
  */
-uint32_t XCONF_parse(const char *__string, XCONF **__conf);
+uint32_t XCONF_parse(XCONFInstance *, const char *string, XCONFObject **conf);
 /**
  *
  * @description dump a configuration to file
- * @param __conf
- * @param __filepath
+ * @param conf
+ * @param _filepath
+ * @param compact
  * @return
  */
-uint32_t XCONF_dump(XCONF *__conf, const char *__filepath);
+uint32_t XCONF_dump(const XCONFInstance *, XCONFObject *conf, bool compact, const char *_filepath);
 /**
  * @description compose a configuration to string
- * @param __conf
+ * @param conf
  * @param buffer
  * @param buffer_size
  * @returns
@@ -148,120 +157,122 @@ uint32_t XCONF_dump(XCONF *__conf, const char *__filepath);
  *                              if buffer's size less than requires
  *      or                      other parse errors
  */
-uint32_t XCONF_compose(XCONF *__conf, char *buffer, uint32_t buffer_size);
+uint32_t XCONF_compose(XCONFInstance *, XCONFObject *conf, bool compact, char *buffer, uint32_t buffer_size);
 
 /**
  * @description create a new configuration
- * @param __conf
+ * @param conf
  * @return
  */
-uint32_t XCONF_create_conf(XCONF **__conf);
+uint32_t XCONF_create_conf(XCONFInstance *, XCONFObject **conf);
 /**
  * @description create a new configuration and linked to an existed configuration
- * @param __conf
- * @param __path
+ * @param instance
+ * @param conf
+ * @param path
  * @param object
  * @return
  */
-uint32_t XCONF_create_object(XCONF *__conf, const char *__path, XCONFObject **object);
+uint32_t XCONF_create_object(XCONFInstance *instance, XCONFObject *restrict conf, const char *path, XCONFObject *restrict *object);
 /**
  * @description create a new value list and linked to an existed configuration
- * @param __conf
- * @param __path
+ * @param instance
+ * @param conf
+ * @param path
  * @param list
  * @return
  */
-uint32_t XCONF_create_list(XCONF *__conf, const char *__path, XCONFList **list);
+uint32_t XCONF_create_list(XCONFInstance *instance, XCONFObject *conf, const char *path, XCONFList **list);
 
-uint32_t XCONF_set_float32(XCONF *__conf, const char *__path, float32_t value);
-uint32_t XCONF_set_float64(XCONF *__conf, const char *__path, float64_t value);
-uint32_t XCONF_set_float128(XCONF *__conf, const char *__path, float128_t value);
-uint32_t XCONF_set_float256(XCONF *__conf, const char *__path, float256_t value);
+uint32_t XCONFObject_set_float32(XCONFInstance *instance, XCONFObject *conf, const char *_path, float32_t value);
+uint32_t XCONFObject_set_float64(XCONFInstance *instance, XCONFObject *conf, const char *_path, float64_t value);
+uint32_t XCONFObject_set_float128(XCONFInstance *instance, XCONFObject *conf, const char *_path, float128_t value);
+uint32_t XCONFObject_set_float256(XCONFInstance *instance, XCONFObject *conf, const char *_path, float256_t value);
 
-uint32_t XCONF_set_uint32(XCONF *__conf, const char *__path, uint32_t value);
-uint32_t XCONF_set_uint64(XCONF *__conf, const char *__path, uint64_t value);
-uint32_t XCONF_set_uint128(XCONF *__conf, const char *__path, uint128_t value);
-uint32_t XCONF_set_uint256(XCONF *__conf, const char *__path, uint256_t value);
+uint32_t XCONFObject_set_uint32(XCONFInstance *instance, XCONFObject *conf, const char *_path, uint32_t value);
+uint32_t XCONFObject_set_uint64(XCONFInstance *instance, XCONFObject *conf, const char *_path, uint64_t value);
+uint32_t XCONFObject_set_uint128(XCONFInstance *instance, XCONFObject *conf, const char *_path, uint128_t value);
+uint32_t XCONFObject_set_uint256(XCONFInstance *instance, XCONFObject *conf, const char *_path, uint256_t value);
 
-uint32_t XCONF_set_int32(XCONF *__conf, const char *__path, int32_t value);
-uint32_t XCONF_set_int64(XCONF *__conf, const char *__path, int64_t value);
-uint32_t XCONF_set_int128(XCONF *__conf, const char *__path, int128_t value);
-uint32_t XCONF_set_int256(XCONF *__conf, const char *__path, int256_t value);
+uint32_t XCONFObject_set_int32(XCONFInstance *instance, XCONFObject *conf, const char *_path, int32_t value);
+uint32_t XCONFObject_set_int64(XCONFInstance *instance, XCONFObject *conf, const char *_path, int64_t value);
+uint32_t XCONFObject_set_int128(XCONFInstance *instance, XCONFObject *conf, const char *_path, int128_t value);
+uint32_t XCONFObject_set_int256(XCONFInstance *instance, XCONFObject *conf, const char *_path, int256_t value);
 
-uint32_t XCONF_set_null(XCONF *__conf, const char *__path);
-uint32_t XCONF_set_bool(XCONF *__conf, const char *__path, bool value);
-uint32_t XCONF_set_list(XCONF *__conf, const char *__path, XCONFList *list);
-uint32_t XCONF_set_text(XCONF *__conf, const char *__path, const char *text);
-uint32_t XCONF_set_object(XCONF *__conf, const char *__path, XCONFObject *object);
+uint32_t XCONFObject_set_null(XCONFInstance *instance, XCONFObject *conf, const char *_path);
+uint32_t XCONFObject_set_bool(XCONFInstance *instance, XCONFObject *conf, const char *_path, bool value);
+uint32_t XCONFObject_set_list(XCONFInstance *instance, XCONFObject *conf, const char *_path, XCONFList *list);
+uint32_t XCONFObject_set_text(XCONFInstance *instance, XCONFObject *conf, const char *_path, const char *text);
+uint32_t XCONFObject_set_object(XCONFInstance *instance, XCONFObject *conf, const char *_path, XCONFObject *object);
 
-uint32_t XCONF_getValueType(XCONF *__conf, const char *__path, enum XCONF_VALUE_TYPE_ENUM *type);
+uint32_t XCONFObject_getValueType(XCONFInstance *instance, XCONFObject *conf, const char *_path, enum XCONF_VALUE_TYPE_ENUM *type);
 
-uint32_t XCONF_get_float32(XCONF *__conf, const char *__path, float32_t *value);
-uint32_t XCONF_get_float64(XCONF *__conf, const char *__path, float64_t *value);
-uint32_t XCONF_get_float128(XCONF *__conf, const char *__path, float128_t *value);
-uint32_t XCONF_get_float256(XCONF *__conf, const char *__path, float256_t *value);
+uint32_t XCONFObject_get_float32(XCONFInstance *instance, XCONFObject *conf, const char *_path, float32_t *value);
+uint32_t XCONFObject_get_float64(XCONFInstance *instance, XCONFObject *conf, const char *_path, float64_t *value);
+uint32_t XCONFObject_get_float128(XCONFInstance *instance, XCONFObject *conf, const char *_path, float128_t *value);
+uint32_t XCONFObject_get_float256(XCONFInstance *instance, XCONFObject *conf, const char *_path, float256_t *value);
 
-uint32_t XCONF_get_uint32(XCONF *__conf, const char *__path, uint32_t *value);
-uint32_t XCONF_get_uint64(XCONF *__conf, const char *__path, uint64_t *value);
-uint32_t XCONF_get_uint128(XCONF *__conf, const char *__path, uint128_t *value);
-uint32_t XCONF_get_uint256(XCONF *__conf, const char *__path, uint256_t *value);
+uint32_t XCONFObject_get_uint32(XCONFInstance *instance, XCONFObject *conf, const char *_path, uint32_t *value);
+uint32_t XCONFObject_get_uint64(XCONFInstance *instance, XCONFObject *conf, const char *_path, uint64_t *value);
+uint32_t XCONFObject_get_uint128(XCONFInstance *instance, XCONFObject *conf, const char *_path, uint128_t *value);
+uint32_t XCONFObject_get_uint256(XCONFInstance *instance, XCONFObject *conf, const char *_path, uint256_t *value);
 
-uint32_t XCONF_get_int32(XCONF *__conf, const char *__path, int32_t *value);
-uint32_t XCONF_get_int64(XCONF *__conf, const char *__path, int64_t *value);
-uint32_t XCONF_get_int128(XCONF *__conf, const char *__path, int128_t *value);
-uint32_t XCONF_get_int256(XCONF *__conf, const char *__path, int256_t *value);
+uint32_t XCONFObject_get_int32(XCONFInstance *instance, XCONFObject *conf, const char *_path, int32_t *value);
+uint32_t XCONFObject_get_int64(XCONFInstance *instance, XCONFObject *conf, const char *_path, int64_t *value);
+uint32_t XCONFObject_get_int128(XCONFInstance *instance, XCONFObject *conf, const char *_path, int128_t *value);
+uint32_t XCONFObject_get_int256(XCONFInstance *instance, XCONFObject *conf, const char *_path, int256_t *value);
 
-uint32_t XCONF_get_bool(XCONF *__conf, const char *__path, bool *value);
-uint32_t XCONF_get_list(XCONF *__conf, const char *__path, XCONFList **list);
-uint32_t XCONF_get_object(XCONF *__conf, const char *__path, XCONFObject **object);
-uint32_t XCONF_get_text(XCONF *__conf, const char *__path, const char **text, uint32_t *size);
+uint32_t XCONFObject_get_bool(XCONFInstance *instance, XCONFObject *conf, const char *_path, bool *value);
+uint32_t XCONFObject_get_list(XCONFInstance *instance, XCONFObject *conf, const char *_path, XCONFList **list);
+uint32_t XCONFObject_get_object(XCONFInstance *instance, XCONFObject *conf, const char *_path, XCONFObject **object);
+uint32_t XCONFObject_get_text(XCONFInstance *instance, XCONFObject *conf, const char *_path, const char **text, uint32_t *size);
 
-uint32_t XCONFList_set_float32(XCONFList *__list, uint32_t index, float32_t value);
-uint32_t XCONFList_set_float64(XCONFList *__list, uint32_t index, float64_t value);
-uint32_t XCONFList_set_float128(XCONFList *__list, uint32_t index, float128_t value);
-uint32_t XCONFList_set_float256(XCONFList *__list, uint32_t index, float256_t value);
+uint32_t XCONFList_set_float32(XCONFInstance *instance, XCONFList *list, uint32_t index, float32_t value);
+uint32_t XCONFList_set_float64(XCONFInstance *instance, XCONFList *list, uint32_t index, float64_t value);
+uint32_t XCONFList_set_float128(XCONFInstance *instance, XCONFList *list, uint32_t index, float128_t value);
+uint32_t XCONFList_set_float256(XCONFInstance *instance, XCONFList *list, uint32_t index, float256_t value);
 
-uint32_t XCONFList_set_uint32(XCONFList *__list, uint32_t index, uint32_t value);
-uint32_t XCONFList_set_uint64(XCONFList *__list, uint32_t index, uint64_t value);
-uint32_t XCONFList_set_uint128(XCONFList *__list, uint32_t index, uint128_t value);
-uint32_t XCONFList_set_uint256(XCONFList *__list, uint32_t index, uint256_t value);
+uint32_t XCONFList_set_uint32(XCONFInstance *instance, XCONFList *list, uint32_t index, uint32_t value);
+uint32_t XCONFList_set_uint64(XCONFInstance *instance, XCONFList *list, uint32_t index, uint64_t value);
+uint32_t XCONFList_set_uint128(XCONFInstance *instance, XCONFList *list, uint32_t index, uint128_t value);
+uint32_t XCONFList_set_uint256(XCONFInstance *instance, XCONFList *list, uint32_t index, uint256_t value);
 
-uint32_t XCONFList_set_int32(XCONFList *__list, uint32_t index, int32_t value);
-uint32_t XCONFList_set_int64(XCONFList *__list, uint32_t index, int64_t value);
-uint32_t XCONFList_set_int128(XCONFList *__list, uint32_t index, int128_t value);
-uint32_t XCONFList_set_int256(XCONFList *__list, uint32_t index, int256_t value);
+uint32_t XCONFList_set_int32(XCONFInstance *instance, XCONFList *list, uint32_t index, int32_t value);
+uint32_t XCONFList_set_int64(XCONFInstance *instance, XCONFList *list, uint32_t index, int64_t value);
+uint32_t XCONFList_set_int128(XCONFInstance *instance, XCONFList *list, uint32_t index, int128_t value);
+uint32_t XCONFList_set_int256(XCONFInstance *instance, XCONFList *list, uint32_t index, int256_t value);
 
-uint32_t XCONFList_set_text(XCONFList *__list, uint32_t index, const char *text);
-uint32_t XCONFList_set_object(XCONFList *__list, uint32_t index, XCONFObject *object);
-uint32_t XCONFList_set_list(XCONFList *__list, uint32_t index, XCONFList *list);
+uint32_t XCONFList_set_text(XCONFInstance *instance, XCONFList *list, uint32_t index, const char *text);
+uint32_t XCONFList_set_object(XCONFInstance *instance, XCONFList *list, uint32_t index, XCONFObject *object);
+uint32_t XCONFList_set_list(XCONFInstance *instance, XCONFList *list, uint32_t index, XCONFList *_list);
 
-uint32_t XCONFList_getValueType(XCONFList *__list, uint32_t index, enum XCONF_VALUE_TYPE_ENUM *type);
+uint32_t XCONFList_getValueType(XCONFInstance *instance, XCONFList *list, uint32_t index, enum XCONF_VALUE_TYPE_ENUM *type);
 
-uint32_t XCONFList_get_float32(XCONFList *__list, uint32_t index, float32_t *value);
-uint32_t XCONFList_get_float64(XCONFList *__list, uint32_t index, float64_t *value);
-uint32_t XCONFList_get_float128(XCONFList *__list, uint32_t index, float128_t *value);
-uint32_t XCONFList_get_float256(XCONFList *__list, uint32_t index, float256_t *value);
+uint32_t XCONFList_get_float32(XCONFInstance *instance, XCONFList *list, uint32_t index, float32_t *value);
+uint32_t XCONFList_get_float64(XCONFInstance *instance, XCONFList *list, uint32_t index, float64_t *value);
+uint32_t XCONFList_get_float128(XCONFInstance *instance, XCONFList *list, uint32_t index, float128_t *value);
+uint32_t XCONFList_get_float256(XCONFInstance *instance, XCONFList *list, uint32_t index, float256_t *value);
 
-uint32_t XCONFList_get_uint32(XCONFList *__list, uint32_t index, uint32_t *value);
-uint32_t XCONFList_get_uint64(XCONFList *__list, uint32_t index, uint64_t *value);
-uint32_t XCONFList_get_uint128(XCONFList *__list, uint32_t index, uint128_t *value);
-uint32_t XCONFList_get_uint256(XCONFList *__list, uint32_t index, uint256_t *value);
+uint32_t XCONFList_get_uint32(XCONFInstance *instance, XCONFList *list, uint32_t index, uint32_t *value);
+uint32_t XCONFList_get_uint64(XCONFInstance *instance, XCONFList *list, uint32_t index, uint64_t *value);
+uint32_t XCONFList_get_uint128(XCONFInstance *instance, XCONFList *list, uint32_t index, uint128_t *value);
+uint32_t XCONFList_get_uint256(XCONFInstance *instance, XCONFList *list, uint32_t index, uint256_t *value);
 
-uint32_t XCONFList_get_int32(XCONFList *__list, uint32_t index, int32_t *value);
-uint32_t XCONFList_get_int64(XCONFList *__list, uint32_t index, int64_t *value);
-uint32_t XCONFList_get_int128(XCONFList *__list, uint32_t index, int128_t *value);
-uint32_t XCONFList_get_int256(XCONFList *__list, uint32_t index, int256_t *value);
+uint32_t XCONFList_get_int32(XCONFInstance *instance, XCONFList *list, uint32_t index, int32_t *value);
+uint32_t XCONFList_get_int64(XCONFInstance *instance, XCONFList *list, uint32_t index, int64_t *value);
+uint32_t XCONFList_get_int128(XCONFInstance *instance, XCONFList *list, uint32_t index, int128_t *value);
+uint32_t XCONFList_get_int256(XCONFInstance *instance, XCONFList *list, uint32_t index, int256_t *value);
 
-uint32_t XCONFList_get_list(XCONFList *__list, uint32_t index, XCONFList **list);
-uint32_t XCONFList_get_object(XCONFList *__list, uint32_t index, XCONFObject **object);
-uint32_t XCONFList_get_text(XCONFList *__list, uint32_t index, const char **text, uint32_t *size);
+uint32_t XCONFList_get_list(XCONFInstance *instance, XCONFList *list, uint32_t index, XCONFList **_list);
+uint32_t XCONFList_get_object(XCONFInstance *instance, XCONFList *list, uint32_t index, XCONFObject **object);
+uint32_t XCONFList_get_text(XCONFInstance *instance, XCONFList *list, uint32_t index, const char **text, uint32_t *size);
 
-uint32_t XCONF_keys(XCONF *__conf, const char **keys, uint32_t *count);
-uint32_t XCONFList_count(XCONFList *__list, uint32_t *count);
+uint32_t XCONF_keys(XCONFInstance *instance, XCONFObject *conf, const char **keys, uint32_t *count);
+uint32_t XCONFList_count(const XCONFList *list, uint32_t *count);
 
-uint32_t XCONF_remove_key(XCONF *__conf, const char *__path, const char *__key);
-uint32_t XCONFList_remove_value(XCONFList *__list, uint32_t index);
+uint32_t XCONF_remove_key(XCONFInstance *instance, XCONFObject *conf, const char *_path, const char *key);
+uint32_t XCONFList_remove_value(XCONFInstance *instance, XCONFList *list, uint32_t index);
 
-uint32_t XCONF_destroy(XCONF *__CONF);
+uint32_t XCONFObject_destroy(XCONFObject *conf);
 
-#endif //__XCONF_H__
+#endif //XCONF_H

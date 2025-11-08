@@ -29,7 +29,7 @@
 #include <check.h>
 
 START_TEST(test_NUMBER_I32) {
-    XCONF *conf = nullptr;
+    XCONFObject *conf = nullptr;
     char *string = "{number: 0x1008611}";
     uint32_t error_code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
 
@@ -46,17 +46,17 @@ START_TEST(test_NUMBER_I32) {
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_str_eq(keys[0], "number");
     enum XCONF_VALUE_TYPE_ENUM value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "number", &value_type);
+    error_code = XCONFObject_getValueType(conf, "number", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_I32);
     int32_t value = 0;
-    XCONF_get_int32(conf, "number", &value);
+    XCONFObject_get_int32(conf, "number", &value);
     ck_assert_int_eq(value, 0x1008611);
 }
 END_TEST
 
 START_TEST(test_NUMBER_I64) {
-    XCONF *conf = nullptr;
+    XCONFObject *conf = nullptr;
     char *string = "{number = 0x1008611L}";
     uint32_t error_code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
 
@@ -73,17 +73,17 @@ START_TEST(test_NUMBER_I64) {
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_str_eq(keys[0], "number");
     enum XCONF_VALUE_TYPE_ENUM value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "number", &value_type);
+    error_code = XCONFObject_getValueType(conf, "number", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_I64);
     int64_t value = 0;
-    XCONF_get_int64(conf, "number", &value);
+    XCONFObject_get_int64(conf, "number", &value);
     ck_assert_int_eq(value, 0x1008611);
 }
 END_TEST
 
 START_TEST(test_NUMBER_I128) {
-    XCONF *conf = nullptr;
+    XCONFObject *conf = nullptr;
     char *string = "{[number] = 0x1008611LL}";
     uint32_t error_code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
 
@@ -100,17 +100,17 @@ START_TEST(test_NUMBER_I128) {
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_str_eq(keys[0], "number");
     enum XCONF_VALUE_TYPE_ENUM value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "number", &value_type);
+    error_code = XCONFObject_getValueType(conf, "number", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_I128);
     int128_t value = 0;
-    XCONF_get_int128(conf, "number", &value);
+    XCONFObject_get_int128(conf, "number", &value);
     ck_assert_int_eq(value, 0x1008611);
 }
 END_TEST
 
 START_TEST(test_NUMBER_U32) {
-    XCONF *conf = nullptr;
+    XCONFObject *conf = nullptr;
     char *string = "{[number]: 0x1008611U}";
     uint32_t error_code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
 
@@ -127,17 +127,17 @@ START_TEST(test_NUMBER_U32) {
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_str_eq(keys[0], "number");
     enum XCONF_VALUE_TYPE_ENUM value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "number", &value_type);
+    error_code = XCONFObject_getValueType(conf, "number", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_U32);
     uint32_t value = 0;
-    XCONF_get_uint32(conf, "number", &value);
+    XCONFObject_get_uint32(conf, "number", &value);
     ck_assert_int_eq(value, 0x1008611);
 }
 END_TEST
 
 START_TEST(test_NUMBER_U64) {
-    XCONF *conf = nullptr;
+    XCONFObject *conf = nullptr;
     char *string = "{[number] 0x1008611LU}";
     uint32_t error_code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
 
@@ -154,17 +154,17 @@ START_TEST(test_NUMBER_U64) {
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_str_eq(keys[0], "number");
     enum XCONF_VALUE_TYPE_ENUM value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "number", &value_type);
+    error_code = XCONFObject_getValueType(conf, "number", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_U64);
     uint64_t value = 0;
-    XCONF_get_uint64(conf, "number", &value);
+    XCONFObject_get_uint64(conf, "number", &value);
     ck_assert_int_eq(value, 0x1008611);
 }
 END_TEST
 
 START_TEST(test_NUMBER_U128) {
-    XCONF *conf = nullptr;
+    XCONFObject *conf = nullptr;
     char *string = "{.number = 0x1008611LLU}";
     uint32_t error_code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
 
@@ -181,17 +181,17 @@ START_TEST(test_NUMBER_U128) {
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_str_eq(keys[0], "number");
     enum XCONF_VALUE_TYPE_ENUM value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "number", &value_type);
+    error_code = XCONFObject_getValueType(conf, "number", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_U128);
     uint128_t value = 0;
-    XCONF_get_uint128(conf, "number", &value);
+    XCONFObject_get_uint128(conf, "number", &value);
     ck_assert_int_eq(value, 0x1008611);
 }
 END_TEST
 
 START_TEST(test_KEYWORD_null) {
-    XCONF *conf = nullptr;
+    XCONFObject *conf = nullptr;
     char *string = "{keyword-null = null, keyword-NULL: NULL}";
     uint32_t error_code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
     enum XCONF_VALUE_TYPE_ENUM value_type = XCONF_VAL_UNINITIALIZED;
@@ -210,11 +210,11 @@ START_TEST(test_KEYWORD_null) {
     ck_assert_str_eq(keys[0], "keyword-null");
     ck_assert_str_eq(keys[1], "keyword-NULL");
     value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "keyword-null", &value_type);
+    error_code = XCONFObject_getValueType(conf, "keyword-null", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_NULL);
     value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "keyword-NULL", &value_type);
+    error_code = XCONFObject_getValueType(conf, "keyword-NULL", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_NULL);
 }
@@ -222,7 +222,7 @@ END_TEST
 
 
 START_TEST(test_KEYWORD_boolean) {
-    XCONF *conf = nullptr;
+    XCONFObject *conf = nullptr;
     char *string = "{keyword_true = true, keyword-TRUE: TRUE, [keyword-false] false, [keyword_FALSE] = FALSE}";
     uint32_t error_code = XCONF_ERROR_UNRECOGNIZED_SYMBOL;
     enum XCONF_VALUE_TYPE_ENUM value_type = XCONF_VAL_UNINITIALIZED;
@@ -245,38 +245,38 @@ START_TEST(test_KEYWORD_boolean) {
     ck_assert_str_eq(keys[3], "keyword_FALSE");
 
     value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "keyword_true", &value_type);
+    error_code = XCONFObject_getValueType(conf, "keyword_true", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_BOOLEAN);
     value = 0;
-    error_code = XCONF_get_bool(conf, "keyword_true", &value);
+    error_code = XCONFObject_get_bool(conf, "keyword_true", &value);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_int_eq(value, true);
 
     value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "keyword-TRUE", &value_type);
+    error_code = XCONFObject_getValueType(conf, "keyword-TRUE", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_BOOLEAN);
     value = 0;
-    error_code = XCONF_get_bool(conf, "keyword-TRUE", &value);
+    error_code = XCONFObject_get_bool(conf, "keyword-TRUE", &value);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_int_eq(value, true);
 
     value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "keyword-false", &value_type);
+    error_code = XCONFObject_getValueType(conf, "keyword-false", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_BOOLEAN);
     value = 1;
-    error_code = XCONF_get_bool(conf, "keyword-false", &value);
+    error_code = XCONFObject_get_bool(conf, "keyword-false", &value);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_int_eq(value, false);
 
     value_type = XCONF_VAL_UNINITIALIZED;
-    error_code = XCONF_getValueType(conf, "keyword_FALSE", &value_type);
+    error_code = XCONFObject_getValueType(conf, "keyword_FALSE", &value_type);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_uint_eq(value_type, XCONF_VAL_BOOLEAN);
     value = 1;
-    error_code = XCONF_get_bool(conf, "keyword_FALSE", &value);
+    error_code = XCONFObject_get_bool(conf, "keyword_FALSE", &value);
     ck_assert_uint_eq(error_code, XCONF_SUCCESS);
     ck_assert_int_eq(value, false);
 }

@@ -31,42 +31,50 @@
 #include "array.h"
 #include "dict.h"
 #include "token.h"
-#include "meman-utils.h"
 #include "xCONF/xCONF.h"
+#include "meman-utils.h"
+#include "enum.h"
+
 
 typedef Array List; // Array<REFER(Value)>
-typedef Dict Object; // Dict<REFER(char), Pair>
+typedef Dict Object; // Dict<REFER(char), Value>
+typedef Object Imported;
 typedef struct Text Text;
-typedef struct Pair Pair;
+typedef struct Path Path;
 typedef struct Value Value;
 
 #define Object_new(allocator) \
-  Dict_new(sizeof(REFER(char)), sizeof(Pair), (key_t *) refer2u64, XCONF_OBJECT_ID, nullptr, nullptr, allocator)
+  Dict_new(sizeof(REFER(char)), sizeof(REFER(Value)), (key_t *) refer2u64, XCONF_OBJECT_ID, nullptr, nullptr, allocator)
 #define List_new(allocator) \
   Array_new(sizeof(REFER(Value)), XCONF_REFER_VALUE_ARRAY, allocator)
+#define ReferArray_new(allocator) \
+  Array_new(sizeof(Refer), XCONF_REFER_ARRAY, allocator)
 
 typedef struct Text {
   uint32_t      size;
   REFER(char_t) content;
 } Text;
 
-enum XCONF_VALUE_CATEGORY_ENUM: uint32_t {
-  XCONF_VAL_CAT_NULL,
-  XCONF_VAL_CAT_LIST,
-  XCONF_VAL_CAT_TEXT,
-  XCONF_VAL_CAT_OBJECT,
-  XCONF_VAL_CAT_BOOLEAN,
+typedef struct Path {
+  const REFER(void)  key;
+  const REFER(Value) parent;
+} Path;
 
-  XCONF_VAL_CAT_INT,
-  XCONF_VAL_CAT_UINT,
-  XCONF_VAL_CAT_FLOAT,
+typedef struct Refer {
+  union {
+    REFER(char_t) key;
+    uint32_t      index;
+  } refer;
+  Location start;
+  Location end;
+} Refer;
 
-  XCONF_VAL_CAT_UNINITIALIZED = UINT32_MAX,
-};
+typedef Array ReferArray; // Array<Refer>
 
 typedef struct Value {
   enum XCONF_VALUE_TYPE_ENUM   type;
   uint32_t      size;
+  Path          path;
   union {
     int32_t       I32;
     uint32_t      U32;
@@ -84,16 +92,12 @@ typedef struct Value {
     bool          BOOLEAN;
     Object *      OBJECT;
     List *        LIST;
+    void *        REFER;
   } val;
 } Value;
 
 typedef Array Values; // Array<REFER(Value)>
 typedef Array Pairs; // Array<Pair>
-
-typedef struct Pair {
-  REFER(char_t) key;
-  REFER(Value)  value;
-} Pair;
 
 typedef struct WrapperedText {
   uint16_t n_pred;
@@ -107,7 +111,7 @@ typedef Text Texts;
 // Maybe reinterpretation of `Path` here
 // makes a little bit confused, but there is no wrong.
 // Because every `Path` is only mapping to a `Pair`.
-typedef Pair Path;
+typedef Path Pair;
 
 void releaseValue(Value *, const Allocator *);
 void releasePair(Pair *, const Allocator *);
